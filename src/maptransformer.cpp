@@ -1,7 +1,3 @@
-//
-// Created by victor on 16.07.18.
-//
-
 #include <math.h>
 #include <vector>
 
@@ -18,7 +14,7 @@ double MapTransformer::deg2rad(double x) { return x * pi() / 180; }
 double MapTransformer::rad2deg(double x) { return x * 180 / pi(); }
 
 
-double distance(double x1, double y1, double x2, double y2) {
+double MapTransformer::distance(double x1, double y1, double x2, double y2) {
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
@@ -30,7 +26,7 @@ int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vect
     for (int i = 0; i < maps_x.size(); i++) {
         double map_x = maps_x[i];
         double map_y = maps_y[i];
-        double dist = distance(x, y, map_x, map_y);
+        double dist = MapTransformer::distance(x, y, map_x, map_y);
         if (dist < closestLen) {
             closestLen = dist;
             closestWaypoint = i;

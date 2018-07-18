@@ -1,7 +1,3 @@
-//
-// Created by victor on 16.07.18.
-//
-
 #ifndef PATH_PLANNING_MAPTRANSFORMER_H
 #define PATH_PLANNING_MAPTRANSFORMER_H
 
@@ -15,6 +11,7 @@ public:
     static vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y);
     static double deg2rad(double x);
     static double rad2deg(double x);
+    static double distance(double x1, double y1, double x2, double y2);
 };
 
 #endif //PATH_PLANNING_MAPTRANSFORMER_H
