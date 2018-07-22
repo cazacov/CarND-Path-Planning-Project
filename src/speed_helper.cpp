@@ -39,8 +39,50 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
                         + jerk_2 * time_step * time_step * time_step / 6.0;
 
 
-    return {final_speed, distance_1 + distance_2, a};
+    return {
+        final_speed,
+        distance_1 + distance_2,
+        a,
+        time_step,
+        start_speed,
+        start_acceleration,
+        jerk_1,
+        (start_speed + delta_v1),
+        a,
+        jerk_2,
+        final_speed,
+        0,
+        0
+    };
 
+}
+
+double SpeedHelper::applyProfile(vector<double> profile, double time)
+{
+    double v0 = 0;
+    double a0 = 0;
+    double j0 = 0;
+
+    if (time < profile[3])
+    {
+        v0 = profile[4];
+        a0 = profile[5];
+        j0 = profile[6];
+    }
+    else if (time < profile[3] * 2)
+    {
+        v0 = profile[7];
+        a0 = profile[8];
+        j0 = profile[9];
+    }
+    else
+    {
+        v0 = profile[10];
+        a0 = profile[11];
+        j0 = profile[12];
+    }
+
+    return v0 * time + a0 * time * time / 2.0 + j0 * time * time * time / 6.0;
 }
 
 vector<double>
