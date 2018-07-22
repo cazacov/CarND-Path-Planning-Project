@@ -27,9 +27,14 @@ public:
     void planPath(double car_x, double car_y, double car_s, double car_d, double car_yaw, double car_speed, vector<vector<double>> sensor_fusion,
                       vector<double> previous_path_x, vector<double> previous_path_y, double end_path_s, double end_path_d);
 
-    tk::spline buildTrajectory(double x, double y, double yaw, double jmt, vector<double> lane, int i, double d);
+    tk::spline buildTrajectory(double x, double y, double yaw, double s, vector<double> jmt, int lane, double time);
 
-    double applyJmt(vector<double> coefficients, double time);
+    double applyJmt(const vector<double>& coefficients, double time);
+
+    void
+    generatePath(double x, double y, double yaw, const vector<double> &jmt,
+                 const tk::spline &trajectory, unsigned long existing_points, vector<double> &path_x,
+                 vector<double> &path_y);
 };
 
 #endif //PATH_PLANNING_PATHPLANNER_H

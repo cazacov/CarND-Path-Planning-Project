@@ -38,10 +38,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     vector<double> frenet = MapTransformer::getFrenet(car_x, car_y, car_yaw, map_waypoints_x, map_waypoints_y);
 
-    double s = frenet[0];
-    double d = frenet[1];
-
-
+    double frenet_s = frenet[0];
+    double frenet_d = frenet[1];
 
     int target_lane = 1;
 
@@ -64,9 +62,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         t_start_x = x_back;
         t_start_y = y_back;
-        t_start_speed = MapTransformer::distance(x_back,y_back, x_prev, y_prev) / ((min_tail_points - 1) * 0.02);
         t_start_yaw = atan2(y_back - y_prev, x_back - x_prev);
-
+        t_start_s = end_path_s;
 
         // Use polynomial fitting to estimate speed and acceleration at last min_tail_points of the previous path
         vector<double> poly_x;
@@ -74,7 +71,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         int start_idx = previous_path_x.size() - min_tail_points;
         for (int i = start_idx; i <  previous_path_x.size(); i++)
         {
-            poly_x.push_back(i);
+            poly_x.push_back(i-start_idx);
             poly_y.push_back(MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],previous_path_x[i], previous_path_y[i]));
         }
 
@@ -83,8 +80,14 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         t_start_speed = coeff[1] / 0.02;
         t_start_acceleration = coeff[2] / (0.02 * 0.02);
+    }
 
-        vector<double> frenet = MapTransformer::getFrenet(t_start_x, t_start_y, t_start_yaw, map_waypoints_x, map_waypoints_y );
+    next_x_vals.clear();
+    next_y_vals.clear();
+    for (int i = 0; i < previous_path_x.size(); i++)
+    {
+        next_x_vals.push_back(previous_path_x[i]);
+        next_y_vals.push_back(previous_path_y[i]);
     }
 
     double start_time = previous_path_x.size() * 0.02;  // we already have path points for start_time seconds
@@ -102,59 +105,48 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_end_speed = profile[0];
     double t_distance = profile[1];
 
-    cout    << "s=" << setw(6) << s
-            << "\t"
-            << "d=" << setw(6) << d
-            << "\t"
-            << "speed=" << setw(6) << t_start_speed
-            << "\t"
-            << "accel=" << setw(6) << t_start_acceleration
-            << "\t"
-            << "time_frame=" << setw(6) << time_frame
-            << "\t"
-            << "t_end_speed=" << setw(6) << t_end_speed
-            << "\t"
-            << "distance=" << setw(6) << t_distance
-            << endl;
+    cout << "frenet_s=" << setw(6) << frenet_s
+         << "\t"
+         << "frenet_d=" << setw(6) << frenet_d
+         << "\t"
+         << "end_s=" << setw(6) << end_path_s
+         << "\t"
+         << "speed=" << setw(6) << t_start_speed
+         << "\t"
+         << "accel=" << setw(6) << t_start_acceleration
+         << "\t"
+         << "time_frame=" << setw(6) << time_frame
+         << "\t"
+         << "t_end_speed=" << setw(6) << t_end_speed
+         << "\t"
+         << "distance=" << setw(6) << t_distance
+         << "\t"
+         << "t_start_s=" << setw(6) << t_start_s
+         << endl;
 
 
     if (t_end_speed > kMaxSpeed) {
         t_end_speed = kMaxSpeed;
     };
 
-    vector<double> jmt = SpeedHelper::solveJmt(t_start_speed, t_end_speed, t_start_acceleration, time_frame, t_distance);
+    vector<double> jmt = SpeedHelper::solveJmt(t_start_speed, t_end_speed, t_start_acceleration, time_frame,
+                                               t_distance);
 
-    /*tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, car_s, jmt, target_lane, time_frame);
+    tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, t_start_s, jmt, target_lane, time_frame);
 
-    next_x_vals.clear();
-    next_y_vals.clear();
-    for (int i = 0; i < previous_path_x.size(); i++)
-    {
-        next_x_vals.push_back(previous_path_x[i]);
-        next_y_vals.push_back(previous_path_y[i]);
-    }
+    vector<double> new_path_x;
+    vector<double> new_path_y;
 
-    double target_x = 30.0;
-    double target_y = spline(target_x);
-    double target_distance = MapTransformer::distance(0,0,target_x, target_y);
+    generatePath(t_start_x, t_start_y, t_start_yaw,
+                 jmt, spline,
+                 next_x_vals.size(),
+                 new_path_x,
+                 new_path_y
+    );
 
-    //generate_trajectory(t_start_x, t_start_y, t_start_yaw, t_start_speed2, t_start_acceleration, target_lane )
-
-    */
-
-    next_x_vals.clear();
-    next_y_vals.clear();
-
-    double dist_inc = 0.4;
-    for(int i = 0; i < 50; i++)
-    {
-        double new_s = car_s + dist_inc * (i+1);
-        double new_d = target_lane * 4.0 + 2.0;
-
-        vector<double> xy =  MapTransformer::getXY(new_s, new_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-
-        next_x_vals.push_back(xy[0]);
-        next_y_vals.push_back(xy[1]);
+    for (int i = 0; i < new_path_x.size(); i++) {
+        next_x_vals.push_back(new_path_x[i]);
+        next_y_vals.push_back(new_path_y[i]);
     }
 
 }
@@ -166,7 +158,7 @@ tk::spline PathPlanner::buildTrajectory(double x, double y, double yaw, double s
     // add two start points to define start and initial yaw of the trajectory
 
     double prev_x = x - cos(yaw);
-    double prev_y = y - cos(yaw);
+    double prev_y = y - sin(yaw);
 
     ptsx.push_back(prev_x);
     ptsx.push_back(x);
@@ -174,10 +166,14 @@ tk::spline PathPlanner::buildTrajectory(double x, double y, double yaw, double s
     ptsy.push_back(prev_y);
     ptsy.push_back(y);
 
+    double s0 = applyJmt(jmt, time*0.75);
+    double s1 = applyJmt(jmt, time*0.8);
+    double s2 = applyJmt(jmt, time);
+
     // add another points
-    vector<double> next_wp0 = MapTransformer::getXY(applyJmt(jmt, time*0.75), 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp1 = MapTransformer::getXY(applyJmt(jmt, time*0.8), 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp2 = MapTransformer::getXY(applyJmt(jmt, time), 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp1 = MapTransformer::getXY(s + s1, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp2 = MapTransformer::getXY(s + s2, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
     ptsx.push_back(next_wp0[0]);
     ptsx.push_back(next_wp1[0]);
@@ -203,7 +199,7 @@ tk::spline PathPlanner::buildTrajectory(double x, double y, double yaw, double s
     return spln;
 }
 
-double PathPlanner::applyJmt(vector<double> coefficients, double time)
+double PathPlanner::applyJmt(const vector<double>& coefficients, double time)
 {
     double t2 = time*time;
     double t3 = t2*time;
@@ -212,5 +208,35 @@ double PathPlanner::applyJmt(vector<double> coefficients, double time)
 
     return coefficients[0] + coefficients[1] * time + coefficients[2] * t2
            + coefficients[3] * t3 + coefficients[4] * t4 + coefficients[5] * t5;
+}
+
+void PathPlanner::generatePath(double x, double y, double yaw,
+                               const vector<double> &jmt, const tk::spline &trajectory, unsigned long existing_points,
+                               vector<double> &path_x, vector<double> &path_y) {
+
+    double target_x = 30.0;
+    double target_y = trajectory(target_x);
+    double target_distance = MapTransformer::distance(0, 0, target_x, target_y);
+
+    path_x.clear();
+    path_y.clear();
+
+    for (int i = 1; i <= 50 - existing_points; i++)
+    {
+        double x_point = applyJmt(jmt, i * 0.02);
+        double y_point = trajectory(x_point);
+
+        double x_ref = x_point;
+        double y_ref = y_point;
+
+        x_point = x_ref * cos(yaw) - y_ref*sin(yaw);
+        y_point = x_ref * sin(yaw) + y_ref*cos(yaw);
+
+        x_point += x;
+        y_point += y;
+
+        path_x.push_back(x_point);
+        path_y.push_back(y_point);
+    }
 }
 
