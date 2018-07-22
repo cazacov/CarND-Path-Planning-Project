@@ -21,7 +21,7 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
     a = max(a, start_acceleration - max_jerk * time_step);
 
     a = min(a, max_jerk * time_step);
-    a = max(a, max_jerk * time_step);
+    a = max(a, -max_jerk * time_step);
 
     double delta_v1 = start_acceleration * time_step + (a - start_acceleration) * time_step / 2.0;
     double delta_v2 = a * time_step / 2.0;
