@@ -3,27 +3,51 @@
 
 using namespace Eigen;
 
-double SpeedHelper::calculateMaxSpeed(double start_speed, double start_acceleration, double time_frame, const double max_acceleration)
+vector<double> SpeedHelper::calculateAccelerationProfile(
+        double start_speed, double start_acceleration,
+        double target_speed, double time_frame,
+        const double max_acceleration, const double max_jerk)
 {
-    double jerk = (max_acceleration * 2 - start_acceleration) / time_frame;
-    double t2 = (time_frame + start_acceleration / jerk) / 2.0;
-    double t1 = time_frame - t2;
+    double time_step = time_frame / 2;
 
-    // accelerate from start_acceleration to max_acceleration
-    double max_v = start_speed + start_acceleration * t1 + (jerk * t1 * t1)/2.0;
+    double delta_v = target_speed - start_speed;
+    double a = (4 * delta_v / time_frame - start_acceleration) / 2;
 
-    // continue increasing speed reducing acceleration form max_acceleration to 0
-    max_v += (start_acceleration + jerk * t1) * t2 - jerk * t2 * t2 / 2.0;
-    return max_v;
+    // Apply limits
+    a = min(a, max_acceleration);
+    a = max(a, -max_acceleration);
+
+    a = min(a, start_acceleration + max_jerk * time_step);
+    a = max(a, start_acceleration - max_jerk * time_step);
+
+    a = min(a, max_jerk * time_step);
+    a = max(a, max_jerk * time_step);
+
+    double delta_v1 = start_acceleration * time_step + (a - start_acceleration) * time_step / 2.0;
+    double delta_v2 = a * time_step / 2.0;
+    double final_speed = start_speed + delta_v1 + delta_v2;
+
+    double jerk_1 =  (a - start_acceleration) / time_step;
+    double jerk_2 = (0-a) / time_step;
+
+    double distance_1 = start_speed * time_step
+            + start_acceleration * time_step * time_step / 2.0
+            + jerk_1 * time_step * time_step * time_step / 6.0;
+
+    double distance_2 = (start_speed + delta_v1) * time_step
+                        + a * time_step * time_step / 2.0
+                        + jerk_2 * time_step * time_step * time_step / 6.0;
+
+
+    return {final_speed, distance_1 + distance_2, a};
+
 }
 
 vector<double>
-SpeedHelper::solveJmt(double start_s, double start_speed, double final_speed, double start_acceleration, double time) {
+SpeedHelper::solveJmt(double start_speed, double final_speed, double start_acceleration, double time, double distance) {
 
-    double final_s = start_s + (start_speed + final_speed) / 2 * time;
-
-    vector<double> start { start_s, start_speed, start_acceleration};
-    vector<double> end { final_s, final_speed, 0};
+    vector<double> start { 0, start_speed, start_acceleration};
+    vector<double> end { distance, final_speed, 0};
 
     double t2 = time*time;
     double t3 = t2*time;

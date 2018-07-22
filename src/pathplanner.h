@@ -2,6 +2,7 @@
 #define PATH_PLANNING_PATHPLANNER_H
 
 #include <vector>
+#include "spline.h"
 
 using namespace std;
 

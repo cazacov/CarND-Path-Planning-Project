@@ -94,8 +94,13 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     double t_target_speed = kMaxSpeed;
 
-    double t_end_speed = SpeedHelper::calculateMaxSpeed(t_start_speed, t_start_acceleration, time_frame,
-                                                        kMaxAcceleration, t_target_speed);
+    vector<double> profile = SpeedHelper::calculateAccelerationProfile(
+            t_start_speed, t_start_acceleration,
+            t_target_speed, time_frame,
+            kMaxAcceleration, kMaxJerk);
+
+    double t_end_speed = profile[0];
+    double t_distance = profile[1];
 
     cout    << "s=" << setw(6) << s
             << "\t"
@@ -108,15 +113,18 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
             << "time_frame=" << setw(6) << time_frame
             << "\t"
             << "t_end_speed=" << setw(6) << t_end_speed
+            << "\t"
+            << "distance=" << setw(6) << t_distance
             << endl;
+
 
     if (t_end_speed > kMaxSpeed) {
         t_end_speed = kMaxSpeed;
     };
 
-    vector<double> jmt = SpeedHelper::solveJmt(car_s, t_start_speed, t_end_speed, t_start_acceleration, time_frame);
+    vector<double> jmt = SpeedHelper::solveJmt(t_start_speed, t_end_speed, t_start_acceleration, time_frame, t_distance);
 
-    tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, car_s, jmt, target_lane, time_frame);
+    /*tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, car_s, jmt, target_lane, time_frame);
 
     next_x_vals.clear();
     next_y_vals.clear();
@@ -132,6 +140,10 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     //generate_trajectory(t_start_x, t_start_y, t_start_yaw, t_start_speed2, t_start_acceleration, target_lane )
 
+    */
+
+    next_x_vals.clear();
+    next_y_vals.clear();
 
     double dist_inc = 0.4;
     for(int i = 0; i < 50; i++)

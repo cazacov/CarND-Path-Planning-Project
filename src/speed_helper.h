@@ -7,10 +7,12 @@ using namespace std;
 
 class SpeedHelper {
 public:
-    static double calculateMaxSpeed(double start_speed, double start_acceleration, double time_frame, const double max_acceleration,
-                                        double d);
-    static vector<double>
-    solveJmt(double start_speed, double final_speed, double start_acceleration, double time, double d);
+    static vector<double> calculateAccelerationProfile(
+            double start_speed, double start_acceleration,
+            double target_speed, double time_frame,
+            const double max_acceleration, const double max_jerk);
+
+    static vector<double> solveJmt(double start_speed, double final_speed, double start_acceleration, double time, double distance);
 };
 
 #endif //PATH_PLANNING_SPEED_HELPER_H
