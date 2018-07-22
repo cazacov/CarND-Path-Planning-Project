@@ -122,7 +122,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
          << "\t"
          << "end_s=" << fixed << setw(6) << setprecision(3)  << end_path_s
          << "\t"
-         << "speed=" << fixed << setw(6) << setprecision(3)  << t_start_speed
+         << "speed=" << fixed << setw(6) << setprecision(3)  << car_speed * 0.447
+         << "\t"
+         << "t_speed=" << fixed << setw(6) << setprecision(3)  << t_start_speed
          << "\t"
          << "acc=" << fixed << setw(6) << setprecision(3) << t_start_acceleration
         << "\t"
