@@ -81,10 +81,14 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         vector<double> coeff;
         MathHelper::polyfit(poly_x, poly_y, coeff, 2);
 
-        t_start_speed = coeff[1] / 0.02;
-        t_start_acceleration = coeff[2] / (0.02 * 0.02);
+        double v0 = coeff[1] / 0.02;
+        double a = coeff[2] / (0.02 * 0.02);
 
-        t_start_speed2 = MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],x_back, y_back) / (0.02 * (min_tail_points - 1));
+        t_start_acceleration =  a * 2;
+        double t = 0.02 * (min_tail_points - 1);
+        t_start_speed =  v0 +  t_start_acceleration * t;
+
+        //MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],x_back, y_back) / (0.02 * (min_tail_points - 1));
     }
 
     next_x_vals.clear();
@@ -158,6 +162,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         next_x_vals.push_back(new_path_x[i]);
         next_y_vals.push_back(new_path_y[i]);
     }
+
+    vector<double> dx;
+    for (int i = 0; i < next_x_vals.size()-1; i++) {
+        dx.push_back((next_x_vals[i+1] - next_x_vals[i]) / 0.02);
+    }
+
     iteration++;
 
 }
