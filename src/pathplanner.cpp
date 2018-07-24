@@ -55,8 +55,6 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_speed = car_speed;
     double t_start_acceleration = 0;
     double t_start_s = car_s;
-    double t_start_jerk = 0;
-
 
 
     if (previous_path_x.size() > 40)
@@ -91,22 +89,17 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
             poly_y.push_back(MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],previous_path_x[i], previous_path_y[i])+5);
         }
 
+        // Use polynomial approximation to estimate speed and acceleration at the end of the previous path
         vector<double> coeff;
-        MathHelper::polyfit(poly_x, poly_y, coeff, 3);
+        MathHelper::polyfit(poly_x, poly_y, coeff, 2);
 
         double v0 = coeff[1] / 0.02;
         double a0 = coeff[2] / (0.02 * 0.02) * 2;
-        double j0 = coeff[3] / (0.02 * 0.02 * 0.02) * 6;
 
         double t = 0.02 * (min_tail_points - 1);
 
-        t_start_jerk = j0;
-        t_start_acceleration = a0 + j0 * t;
-        t_start_speed =  v0 +  a0 * t + j0 * t * t;
-
-        //t_start_acceleration =  last_acc;
-        //t_start_speed =  last_v;
-        //MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],x_back, y_back) / (0.02 * (min_tail_points - 1));
+        t_start_acceleration = a0;
+        t_start_speed =  v0 +  a0 * t;
     }
 
     next_x_vals.clear();

@@ -9,8 +9,10 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
         const double max_acceleration, const double max_jerk)
 {
     double time_step = time_frame / 2;
-
     double delta_v = target_speed - start_speed;
+
+/*
+    double a0 = start_acceleration;
     double a = (4 * delta_v / time_frame - start_acceleration) / 2;
 
     // Apply limits
@@ -23,15 +25,23 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
     a = min(a, max_jerk * time_step);
     a = max(a, -max_jerk * time_step);
 
-    double delta_v1 = start_acceleration * time_step + (a - start_acceleration) * time_step / 2.0;
-    double delta_v2 = a * time_step / 2.0;
-    double final_speed = start_speed + delta_v1 + delta_v2;
-
     double jerk_1 =  (a - start_acceleration) / time_step;
     double jerk_2 = (0-a) / time_step;
 
+    double delta_v1 = start_acceleration * time_step + (a - start_acceleration) * time_step / 2.0;
+    double delta_v2 = a * time_step / 2.0;
+*/
+    double a = delta_v / time_frame;
+    double a0 = a;                      // ignore previous acceleration because it cannot be measured precisely
+    double delta_v1 = a * time_step;
+    double delta_v2 = a * time_step;
+    double jerk_1 = 0;
+    double jerk_2 = 0;
+
+    double final_speed = start_speed + delta_v1 + delta_v2;
+
     double distance_1 = start_speed * time_step
-            + start_acceleration * time_step * time_step / 2.0
+            + a0 * time_step * time_step / 2.0
             + jerk_1 * time_step * time_step * time_step / 6.0;
 
     double distance_2 = (start_speed + delta_v1) * time_step
@@ -45,7 +55,7 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
         a,
         time_step,
         start_speed,
-        start_acceleration,
+        a0,
         jerk_1,
         (start_speed + delta_v1),
         a,
