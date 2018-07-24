@@ -57,7 +57,7 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
 
 }
 
-double SpeedHelper::applyProfile(vector<double> profile, double time)
+vector<double> SpeedHelper::applyProfile(vector<double> profile, double time)
 {
     double v0 = 0;
     double a0 = 0;
@@ -82,7 +82,12 @@ double SpeedHelper::applyProfile(vector<double> profile, double time)
         j0 = profile[12];
     }
 
-    return v0 * time + a0 * time * time / 2.0 + j0 * time * time * time / 6.0;
+    double distance = v0 * time + a0 * time * time / 2.0 + j0 * time * time * time / 6.0;
+    double speed = v0 + a0 * time + j0 * time * time / 2;
+    double acceleration = a0 + j0 * time;
+
+
+    return {distance, speed, acceleration};
 }
 
 vector<double>

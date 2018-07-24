@@ -32,9 +32,8 @@ public:
     double applyJmt(const vector<double>& coefficients, double time);
 
     void
-    generatePath(double x, double y, double yaw, const vector<double> &jmt,
-                 const tk::spline &trajectory, unsigned long existing_points, vector<double> &path_x,
-                 vector<double> &path_y);
+    generatePath(double x, double y, double yaw, vector<double> jmt, tk::spline trajectory, unsigned long existing_points,
+                     vector<double>& path_x, vector<double>& path_y, vector<double>& path_v, vector<double>& path_a);
 };
 
 #endif //PATH_PLANNING_PATHPLANNER_H

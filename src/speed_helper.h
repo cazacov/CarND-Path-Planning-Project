@@ -14,7 +14,7 @@ public:
 
     static vector<double> solveJmt(double start_speed, double final_speed, double start_acceleration, double time, double distance);
 
-    static double applyProfile(vector<double> profile, double time);
+    static vector<double> applyProfile(vector<double> profile, double time);
 };
 
 #endif //PATH_PLANNING_SPEED_HELPER_H

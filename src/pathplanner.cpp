@@ -25,10 +25,13 @@ PathPlanner::PathPlanner(const std::vector<double> & _map_waypoints_x,
 
 const double kMaxAcceleration = 5;  // m/s^2
 const double kMaxJerk =         5;  // m/s^3
-const double kPlanningTime  =   4;  // seconds
-const double kMaxSpeed = 49.5 * 0.447; // 49.5 MPH
+const double kPlanningTime  =   3;  // seconds
+const double kMaxSpeed = 49 * 0.447; // 49 MPH
 
 int iteration = 0;
+double last_acc = 0;
+double last_v = 0;
+
 
 void
 PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, double car_yaw, double car_speed,
@@ -52,11 +55,14 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_speed = car_speed;
     double t_start_acceleration = 0;
     double t_start_s = car_s;
+    double t_start_jerk = 0;
 
-    if (previous_path_x.size() > 30)
+
+
+    if (previous_path_x.size() > 40)
     {
-        previous_path_x.resize(30);
-        previous_path_y.resize(30);
+        previous_path_x.resize(40);
+        previous_path_y.resize(40);
     }
 
     const int min_tail_points = 10;
@@ -86,15 +92,20 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         }
 
         vector<double> coeff;
-        MathHelper::polyfit(poly_x, poly_y, coeff, 2);
+        MathHelper::polyfit(poly_x, poly_y, coeff, 3);
 
         double v0 = coeff[1] / 0.02;
-        double a = coeff[2] / (0.02 * 0.02);
+        double a0 = coeff[2] / (0.02 * 0.02) * 2;
+        double j0 = coeff[3] / (0.02 * 0.02 * 0.02) * 6;
 
-        t_start_acceleration =  a * 2;
         double t = 0.02 * (min_tail_points - 1);
-        t_start_speed =  v0 +  t_start_acceleration * t;
 
+        t_start_jerk = j0;
+        t_start_acceleration = a0 + j0 * t;
+        t_start_speed =  v0 +  a0 * t + j0 * t * t;
+
+        //t_start_acceleration =  last_acc;
+        //t_start_speed =  last_v;
         //MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx],x_back, y_back) / (0.02 * (min_tail_points - 1));
     }
 
@@ -122,26 +133,6 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_distance = profile[1];
     double t_acc = profile[2];
 
-    cout << setw(5) << iteration
-         << "\t"
-         << "car_speed=" << fixed << setw(6) << setprecision(3)  << car_speed * 0.447
-         << "\t"
-         << "t_speed=" << fixed << setw(6) << setprecision(3)  << t_start_speed
-         << "\t"
-         << "t_acc=" << fixed << setw(6) << setprecision(3) << t_start_acceleration
-        << "\t"
-        << "end_speed=" << fixed << setw(6) << setprecision(3)  << t_end_speed
-         << "\t"
-         << "dist=" << fixed << setw(6) << setprecision(3)  << t_distance
-         << "\t"
-         << "ta=" << fixed << setw(6) << setprecision(3)  << t_acc
-        << "\t"
-         << "time=" << fixed << setw(6) << setprecision(3)  << time_frame
-
-         << "\t"
-         << "start_s=" << setw(6) << t_start_s
-         << endl;
-
 
     /*1
     vector<double> jmt = SpeedHelper::solveJmt(t_start_speed, t_end_speed, t_start_acceleration, time_frame,
@@ -152,13 +143,11 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     vector<double> new_path_x;
     vector<double> new_path_y;
+    vector<double> new_path_v;
+    vector<double> new_path_a;
 
-    generatePath(t_start_x, t_start_y, t_start_yaw,
-                 profile, spline,
-                 next_x_vals.size(),
-                 new_path_x,
-                 new_path_y
-    );
+    generatePath(t_start_x, t_start_y, t_start_yaw, profile, spline, next_x_vals.size(), new_path_x, new_path_y,
+                 new_path_v, new_path_a);
 
     for (int i = 0; i < new_path_x.size(); i++) {
         next_x_vals.push_back(new_path_x[i]);
@@ -169,6 +158,33 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     for (int i = 0; i < next_x_vals.size()-1; i++) {
         dx.push_back((next_x_vals[i+1] - next_x_vals[i]) / 0.02);
     }
+
+    cout << setw(5) << iteration
+         << "\t"
+         << "car_speed=" << fixed << setw(6) << setprecision(3)  << car_speed * 0.447
+         << "\t"
+         << "t_speed=" << fixed << setw(6) << setprecision(3)  << t_start_speed
+         << "\t"
+         << "t_acc=" << fixed << setw(6) << setprecision(3) << t_start_acceleration
+         << "\t"
+         << "l_v=" << fixed << setw(6) << setprecision(3) << last_v
+         << "\t"
+         << "l_acc=" << fixed << setw(6) << setprecision(3) << last_acc
+         << "\t"
+         << "end_speed=" << fixed << setw(6) << setprecision(3)  << t_end_speed
+         << "\t"
+         << "dist=" << fixed << setw(6) << setprecision(3)  << t_distance
+         << "\t"
+         << "ta=" << fixed << setw(6) << setprecision(3)  << t_acc
+         << "\t"
+         << "time=" << fixed << setw(6) << setprecision(3)  << time_frame
+
+         << "\t"
+         << "start_s=" << setw(6) << t_start_s
+         << endl;
+
+    last_v = new_path_v.back();
+    last_acc = new_path_a.back();
 
     iteration++;
 
@@ -189,9 +205,9 @@ tk::spline PathPlanner::buildTrajectory(double x, double y, double yaw, double s
     ptsy.push_back(prev_y);
     ptsy.push_back(y);
 
-    double s0 = SpeedHelper::applyProfile(profile, time*0.5);
-    double s1 = SpeedHelper::applyProfile(profile, time*0.75);
-    double s2 = SpeedHelper::applyProfile(profile, time);
+    double s0 = SpeedHelper::applyProfile(profile, time*0.5)[0];
+    double s1 = SpeedHelper::applyProfile(profile, time*0.75)[0];
+    double s2 = SpeedHelper::applyProfile(profile, time)[0];
 
     // add another points
     vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -233,16 +249,17 @@ double PathPlanner::applyJmt(const vector<double>& coefficients, double time)
            + coefficients[3] * t3 + coefficients[4] * t4 + coefficients[5] * t5;
 }
 
-void PathPlanner::generatePath(double x, double y, double yaw,
-                               const vector<double> &profile, const tk::spline &trajectory, unsigned long existing_points,
-                               vector<double> &path_x, vector<double> &path_y) {
+void PathPlanner::generatePath(double x, double y, double yaw, vector<double> profile, tk::spline trajectory,
+                               unsigned long existing_points, vector<double>& path_x, vector<double>& path_y, vector<double>& path_v, vector<double>& path_a) {
 
     path_x.clear();
     path_y.clear();
 
     for (int i = 1; i <= 50 - existing_points; i++)
     {
-        double x_point = SpeedHelper::applyProfile(profile, i * 0.02);
+        vector<double> data = SpeedHelper::applyProfile(profile, i * 0.02);
+
+        double x_point = data[0];
         double y_point = trajectory(x_point);
 
         double x_ref = x_point;
@@ -256,6 +273,8 @@ void PathPlanner::generatePath(double x, double y, double yaw,
 
         path_x.push_back(x_point);
         path_y.push_back(y_point);
+        path_v.push_back(data[1]);
+        path_a.push_back(data[2]);
     }
 }
 
