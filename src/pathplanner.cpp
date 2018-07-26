@@ -57,6 +57,11 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_acceleration = 0;
     double t_start_s = car_s;
 
+    int current_lane = frenet_d  / 4;
+    if (current_lane < 0) {
+        current_lane = 0;
+    }
+
 
     if (previous_path_x.size() > 40)
     {
@@ -121,6 +126,24 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     vector<double> new_path_x;
     vector<double> new_path_y;
 
+    vector<int> possible_lanes;
+
+    bool can_left = current_lane > 0;
+    bool can_right = current_lane < 2;
+
+    possible_lanes.push_back(current_lane);    // First try to to stay in the current lane. That's most comfortable.
+
+    if (can_left)
+    {
+        possible_lanes.push_back(current_lane - 1);
+    }
+    if (can_right)
+    {
+        possible_lanes.push_back(current_lane + 1);
+    }
+
+    int lane_index = 0;
+
     while (t_target_speed > kMinSpeed) {
 
         vector<double> profile = SpeedHelper::calculateAccelerationProfile(
@@ -138,51 +161,63 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                                                    t_distance);
         */
 
-        tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, t_start_s, profile, target_lane,
-                                            time_frame);
+            target_lane = possible_lanes[lane_index];
 
-        vector<double> new_path_v;
-        vector<double> new_path_a;
 
-        new_path_x.clear();
-        new_path_y.clear();
+            tk::spline spline = buildTrajectory(t_start_x, t_start_y, t_start_yaw, t_start_s, profile, target_lane,
+                                                time_frame);
 
-        unsigned long existing_points = next_x_vals.size();
-        generatePath(t_start_x, t_start_y, t_start_yaw, profile, spline, time_frame, existing_points, new_path_x,
-                     new_path_y,
-                     new_path_v, new_path_a);
+            vector<double> new_path_v;
+            vector<double> new_path_a;
 
-        bool is_valid = true;
+            new_path_x.clear();
+            new_path_y.clear();
 
-        for (int i = 0; i < new_path_x.size(); i++) {
-            double my_yaw = t_start_yaw;
-            if (i > 0) {
-                double my_yaw = atan2(new_path_y[i] - new_path_y[i - 1], new_path_x[i] - new_path_x[i - 1]);
-            }
-            double my_x = new_path_x[i];
-            double my_y = new_path_y[i];
+            unsigned long existing_points = next_x_vals.size();
+            generatePath(t_start_x, t_start_y, t_start_yaw, profile, spline, time_frame, existing_points, new_path_x,
+                         new_path_y,
+                         new_path_v, new_path_a);
 
-            vector<double> my_frenet = MapTransformer::getFrenet(my_x, my_y, my_yaw, map_waypoints_x, map_waypoints_y);
-            double my_s = my_frenet[0];
-            double my_d = my_frenet[1];
+            bool is_valid = true;
 
-            for (int car = 0; car < sensor_fusion.size(); car++) {
-                double car_vx = sensor_fusion[car][3];
-                double car_vy = sensor_fusion[car][4];
-                double car_v = sqrt(car_vx * car_vx + car_vy * car_vy);
-                double car_s = sensor_fusion[car][5] + (existing_points + i + 1) * 0.02 * car_v;
-                double car_d = sensor_fusion[car][6];
-                double car_yaw = atan2(car_vy, car_vx);
-                vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
-                                                              map_waypoints_y);
+            for (int i = 0; i < new_path_x.size(); i++) {
+                double my_yaw = t_start_yaw;
+                if (i > 0) {
+                    double my_yaw = atan2(new_path_y[i] - new_path_y[i - 1], new_path_x[i] - new_path_x[i - 1]);
+                }
+                double my_x = new_path_x[i];
+                double my_y = new_path_y[i];
 
-                if (car_s > my_s && car_s - my_s < 30) {
-                    if (fabs(my_d - car_d) < 3) {
-                        is_valid = false;
+                vector<double> my_frenet = MapTransformer::getFrenet(my_x, my_y, my_yaw, map_waypoints_x,
+                                                                     map_waypoints_y);
+                double my_s = my_frenet[0];
+                double my_d = my_frenet[1];
+
+                for (int car = 0; car < sensor_fusion.size(); car++) {
+                    double car_vx = sensor_fusion[car][3];
+                    double car_vy = sensor_fusion[car][4];
+                    double car_v = sqrt(car_vx * car_vx + car_vy * car_vy);
+                    double car_s = sensor_fusion[car][5] + (existing_points + i + 1) * 0.02 * car_v;
+                    double car_d = sensor_fusion[car][6];
+                    int car_lane = car_d / 4;
+                    double car_yaw = atan2(car_vy, car_vx);
+                    vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
+                                                                  map_waypoints_y);
+
+                    double min_distance = 30;
+                    if (car_lane != current_lane)   // add penalty for changing lane
+                    {
+                        min_distance += 5;
+                    }
+
+                    if (car_s > my_s && car_s - my_s < min_distance ) {
+                        if (fabs(my_d - car_d) < 3) {
+                            is_valid = false;
+                        }
                     }
                 }
             }
-        }
+
 
         cout << setw(5) << iteration
              << "\t"
@@ -210,8 +245,16 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         if (!is_valid)
         {
-            t_target_speed -= 0.447;    // Try to drive slower
-            cout << "Reducing speed to " << t_target_speed << endl;
+            if (lane_index < possible_lanes.size() - 1)
+            {
+                lane_index++; // try next lane
+                cout << "Trying lane " << possible_lanes[lane_index] << endl;
+            }
+            else {
+                lane_index = 0;
+                t_target_speed -= 0.447;    // Try to drive slower
+                cout << "Reducing speed to " << t_target_speed << endl;
+            }
         }
         else {
             cout << "Trajectory is Ok, target speed: " << t_target_speed << endl;
@@ -282,8 +325,8 @@ tk::spline PathPlanner::buildTrajectory(double x, double y, double yaw, double s
     ptsy.push_back(prev_y);
     ptsy.push_back(y);
 
-    double s0 = SpeedHelper::applyProfile(profile, time*0.5)[0];
-    double s1 = SpeedHelper::applyProfile(profile, time*0.75)[0];
+    double s0 = SpeedHelper::applyProfile(profile, time*0.6)[0];
+    double s1 = SpeedHelper::applyProfile(profile, time*0.8)[0];
     double s2 = SpeedHelper::applyProfile(profile, time)[0];
 
     // add another points
