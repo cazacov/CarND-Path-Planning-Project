@@ -130,3 +130,16 @@ vector<double> MapTransformer::getXY(double s, double d, const vector<double> &m
     return {x, y};
 
 }
+
+int MapTransformer::d2lane(double d) {
+    int lane = d / 4;
+    if (lane < 0)
+    {
+        lane = 0;
+    }
+    if (lane > 2)
+    {
+        lane = 2;
+    }
+    return lane;
+}

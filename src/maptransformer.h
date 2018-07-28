@@ -12,6 +12,7 @@ public:
     static double deg2rad(double x);
     static double rad2deg(double x);
     static double distance(double x1, double y1, double x2, double y2);
+    static int d2lane(double d);
 };
 
 #endif //PATH_PLANNING_MAPTRANSFORMER_H

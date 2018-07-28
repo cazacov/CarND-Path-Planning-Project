@@ -32,6 +32,9 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
     double delta_v2 = a * time_step / 2.0;
 */
     double a = delta_v / time_frame;
+    a = min(a, max_acceleration);
+    a = max(a, -max_acceleration);
+
     double a0 = a;                      // ignore previous acceleration because it cannot be measured precisely
     double delta_v1 = a * time_step;
     double delta_v2 = a * time_step;

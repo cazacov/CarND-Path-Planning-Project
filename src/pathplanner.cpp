@@ -58,17 +58,15 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_acceleration = 0;
     double t_start_s = car_s;
 
-    int current_lane = frenet_d  / 4;
-    if (current_lane < 0) {
-        current_lane = 0;
-    }
+    int current_lane = MapTransformer::d2lane(frenet_d);
 
-
+    /*
     if (previous_path_x.size() > 40)
     {
         previous_path_x.resize(40);
         previous_path_y.resize(40);
     }
+    */
 
     const int min_tail_points = 10;
     if (previous_path_x.size() >= min_tail_points) // we have some data from previous trajectory
@@ -172,7 +170,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                     double car_v = sqrt(car_vx * car_vx + car_vy * car_vy);
                     double car_s = sensor_fusion[car][5] + (existing_points + i + 1) * 0.02 * car_v;
                     double car_d = sensor_fusion[car][6];
-                    int car_lane = car_d / 4;
+                    int car_lane = MapTransformer::d2lane(car_d);
                     double car_yaw = atan2(car_vy, car_vx);
                     vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
                                                                   map_waypoints_y);
@@ -180,7 +178,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                     double min_distance = 30;
                     if (car_lane != current_lane)   // add penalty for changing lane
                     {
-                        min_distance += 5;
+                        min_distance += 10;
                     }
 
                     if (car_s > my_s && car_s - my_s < min_distance ) {
