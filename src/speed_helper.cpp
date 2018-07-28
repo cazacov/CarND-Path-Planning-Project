@@ -126,3 +126,4 @@ SpeedHelper::solveJmt(double start_speed, double final_speed, double start_accel
     Vector3d x = A.colPivHouseholderQr().solve(B);
     return {start[0], start[1], start[2]/2.0, x[0], x[1], x[2]};
 }
+
