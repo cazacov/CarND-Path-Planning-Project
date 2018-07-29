@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "spline.h"
+#include "trajectory.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
                       vector<double> previous_path_x, vector<double> previous_path_y, double end_path_s, double end_path_d);
 
     double applyJmt(const vector<double>& coefficients, double time);
+
 
 };
 

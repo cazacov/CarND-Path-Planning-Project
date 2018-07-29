@@ -37,6 +37,8 @@ public:
 
     void generatePath(double start_x, double start_y, double start_yaw, const std::vector<double>& profile, double time, Trajectory& trajectory);
 
+    bool validate(const std::vector<std::vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
+                  const Trajectory &trajectory, double start_time);
 };
 
 

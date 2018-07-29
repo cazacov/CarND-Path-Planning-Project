@@ -106,3 +106,56 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_a.push_back(data[2]);
     }
 }
+
+bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
+                           const Trajectory &trajectory, double start_time) {
+    bool result = true;
+
+    for (int i = 0; i < trajectory.path_x.size(); i++) {
+
+        double time = start_time + (i + 1) * 0.02;
+        double my_x = trajectory.path_x[i];
+        double my_y = trajectory.path_y[i];
+        double my_yaw = t_start_yaw;
+        if (i > 0) {
+            my_yaw = atan2(trajectory.path_y[i] - trajectory.path_y[i - 1],
+                                  trajectory.path_x[i] - trajectory.path_x[i - 1]);
+        }
+        vector<double> my_frenet = MapTransformer::getFrenet(my_x, my_y, my_yaw, map_waypoints_x, map_waypoints_y);
+        double my_s = my_frenet[0];
+        double my_d = my_frenet[1];
+
+        for (int car = 0; car < sensor_fusion.size(); car++) {
+            int car_id  = sensor_fusion[car][0];
+            double car_x = sensor_fusion[car][1];
+            double car_y = sensor_fusion[car][2];
+            double car_vx = sensor_fusion[car][3];
+            double car_vy = sensor_fusion[car][4];
+            double car_v = sqrt(car_vx * car_vx + car_vy * car_vy);
+            double car_s = sensor_fusion[car][5] + time * car_v;
+            double car_d = sensor_fusion[car][6];
+            int car_lane = MapTransformer::d2lane(car_d);
+            double car_yaw = atan2(car_vy, car_vx);
+            vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
+                                                          map_waypoints_y);
+
+            double min_distance = 30;
+            if (car_lane != current_lane)   // add penalty for changing lane
+            {
+                min_distance += 10;
+            }
+
+            if (car_s > (my_s - 10) && car_s - my_s < min_distance) {
+                if (fabs(my_d - car_d) < 3) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        if (!result)
+        {
+            break;
+        }
+    }
+    return result;
+}
