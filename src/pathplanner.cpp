@@ -62,10 +62,10 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     int current_lane = MapTransformer::d2lane(frenet_d);
 
 
-    if (previous_path_x.size() > 40)
+    if (previous_path_x.size() > 25)
     {
-        previous_path_x.resize(40);
-        previous_path_y.resize(40);
+        previous_path_x.resize(25);
+        previous_path_y.resize(25);
     }
 
     const int min_tail_points = 10;

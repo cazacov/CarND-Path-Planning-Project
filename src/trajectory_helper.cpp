@@ -32,7 +32,7 @@ tk::spline TrajectoryHelper::buildTrajectory(
     ptsy.push_back(prev_y);
     ptsy.push_back(start_y);
 
-    double s0 = SpeedHelper::applyProfile(profile, time*0.5)[0];
+    double s0 = SpeedHelper::applyProfile(profile, time*0.6)[0];
     double s1 = SpeedHelper::applyProfile(profile, time*0.75)[0];
     double s2 = SpeedHelper::applyProfile(profile, time*0.95)[0];
     double s3 = SpeedHelper::applyProfile(profile, time*1.0)[0];
@@ -76,13 +76,10 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
     path_x.clear();
     path_y.clear();
 
-    double hypotenuse = sqrt(30*30 + trajectory(30)*trajectory(30));
-    double scale = 30.0 / hypotenuse;
-
     double t = 0;
-    double dt = 0.02 * scale;
+    double dt = 0.02;
 
-    while (t <= time)
+    for (int i = 0; i < time / 0.02; i++)
     {
         t += dt;
 
@@ -93,6 +90,9 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
 
         double x_ref = x_point;
         double y_ref = y_point;
+
+        double local_yaw = atan2(trajectory.deriv(1, x_point), 1);
+        dt = 0.02 * cos(local_yaw);
 
         x_point = x_ref * cos(start_yaw) - y_ref*sin(start_yaw);
         y_point = x_ref * sin(start_yaw) + y_ref*cos(start_yaw);
