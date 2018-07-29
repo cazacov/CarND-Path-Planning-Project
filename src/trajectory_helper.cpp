@@ -11,7 +11,7 @@
 
 using namespace std;
 
-tk::spline TrajectoryHelper::buildTrajectory(
+Trajectory TrajectoryHelper::buildTrajectory(
         double start_x, double start_y, double start_yaw, double s,
         const vector<double> profile, int lane, double time,
         const std::vector<double>& map_waypoints_x,
@@ -63,18 +63,21 @@ tk::spline TrajectoryHelper::buildTrajectory(
         ptsy[i] = (shift_x *sin(0 - start_yaw) + shift_y*cos(0-start_yaw));
     }
 
-    tk::spline spln;
-    spln.set_points(ptsx, ptsy);
+    Trajectory result;
+    result.spline.set_points(ptsx, ptsy);
 
-    return spln;
+    generatePath(start_x, start_y, start_yaw, profile, time, result);
+
+    return result;
 }
 
-void TrajectoryHelper::generatePath(double start_x, double start_y, double start_yaw, vector<double> profile,
-                               tk::spline trajectory, double time,
-                               std::vector<double>& path_x, std::vector<double>& path_y, std::vector<double>& path_v, std::vector<double>& path_a) {
 
-    path_x.clear();
-    path_y.clear();
+void TrajectoryHelper::generatePath(double start_x, double start_y, double start_yaw, const std::vector<double> &profile,
+                                    double time, Trajectory& trajectory) {
+    trajectory.path_x.clear();
+    trajectory.path_y.clear();
+    trajectory.path_v.clear();
+    trajectory.path_a.clear();
 
     double t = 0;
     double dt = 0.02;
@@ -86,12 +89,12 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         vector<double> data = SpeedHelper::applyProfile(profile, t);
 
         double x_point = data[0];
-        double y_point = trajectory(x_point);
+        double y_point = trajectory.spline(x_point);
 
         double x_ref = x_point;
         double y_ref = y_point;
 
-        double local_yaw = atan2(trajectory.deriv(1, x_point), 1);
+        double local_yaw = atan2(trajectory.spline.deriv(1, x_point), 1);
         dt = 0.02 * cos(local_yaw);
 
         x_point = x_ref * cos(start_yaw) - y_ref*sin(start_yaw);
@@ -100,9 +103,9 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         x_point += start_x;
         y_point += start_y;
 
-        path_x.push_back(x_point);
-        path_y.push_back(y_point);
-        path_v.push_back(data[1]);
-        path_a.push_back(data[2]);
+        trajectory.path_x.push_back(x_point);
+        trajectory.path_y.push_back(y_point);
+        trajectory.path_v.push_back(data[1]);
+        trajectory.path_a.push_back(data[2]);
     }
 }
