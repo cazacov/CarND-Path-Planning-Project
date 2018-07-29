@@ -79,9 +79,12 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
     double hypotenuse = sqrt(30*30 + trajectory(30)*trajectory(30));
     double scale = 30.0 / hypotenuse;
 
-    for (int i = 1; i <= time / 0.02; i++)
+    double t = 0;
+    double dt = 0.02 * scale;
+
+    while (t <= time)
     {
-        double t = i * 0.02 * scale;
+        t += dt;
 
         vector<double> data = SpeedHelper::applyProfile(profile, t);
 
