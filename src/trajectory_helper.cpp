@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -61,6 +62,15 @@ Trajectory TrajectoryHelper::buildTrajectory(
     }
 
     Trajectory result;
+
+    // check points
+    for (int i = 0; i < ptsx.size() - 1; i++) {
+        if (ptsx[i] >= ptsx[i+1])
+        {
+            cout << "OMG";
+        }
+    }
+
     result.spline.set_points(ptsx, ptsy);
 
     generatePath(start_x, start_y, start_yaw, profile, time, result);

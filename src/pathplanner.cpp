@@ -114,6 +114,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     Trajectory best_trajectory;
 
+    cout << setw(5) << iteration;
+
     while (t_target_speed > kMinSpeed) {
 
         vector<double> profile = SpeedHelper::calculateAccelerationProfile(
@@ -133,10 +135,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                 t_start_x, t_start_y, t_start_yaw, t_start_s,
                 profile, target_lane, time_frame);
 
+        cout << "\tL: "<< target_lane << "\tv:" << setw(6) << t_target_speed;
+
 
         bool is_valid = trajectoryHelper.validate(sensor_fusion, t_start_yaw, current_lane, trajectory, start_time);
 
-
+/*
         cout << setw(5) << iteration
              << "\t"
              << "car_speed=" << fixed << setw(6) << setprecision(3) << car_speed * 0.447
@@ -160,27 +164,31 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
              << "\t"
              << "start_s=" << setw(6) << t_start_s
              << endl;
+*/
 
         if (!is_valid) {
             if (lane_index < possible_lanes.size() - 1) {
                 lane_index++; // try next lane
-                cout << "Trying lane " << possible_lanes[lane_index] << endl;
+//                cout << "Trying lane " << possible_lanes[lane_index] << endl;
             } else {
                 lane_index = 0;
                 t_target_speed -= 0.447;    // Try to drive slower
-                cout << "Reducing speed to " << t_target_speed << endl;
+                cout << "\tbraking";
 
                 if (t_target_speed < kMinSpeed) {
-                    cout << "Traveling at the minimum speed: " << t_target_speed << endl;
-                    best_trajectory = trajectory;
+                    cout << "Min speed! ";
+                    // Stay in the current lane
+                    best_trajectory = trajectoryHelper.buildTrajectory(
+                            t_start_x, t_start_y, t_start_yaw, t_start_s,
+                            profile, current_lane, time_frame);
                 }
-
             }
         } else {
-            cout << "Trajectory is Ok, target speed: " << t_target_speed << endl;
             best_trajectory = trajectory;
+            cout << "\tOk" << endl;
             break;
         }
+        cout << endl;
     }
 
     for (int i = 0; i < best_trajectory.path_x.size(); i++) {
