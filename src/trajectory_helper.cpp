@@ -32,22 +32,26 @@ tk::spline TrajectoryHelper::buildTrajectory(
     ptsy.push_back(prev_y);
     ptsy.push_back(start_y);
 
-    double s0 = SpeedHelper::applyProfile(profile, time*0.6)[0];
-    double s1 = SpeedHelper::applyProfile(profile, time*0.8)[0];
-    double s2 = SpeedHelper::applyProfile(profile, time)[0];
+    double s0 = SpeedHelper::applyProfile(profile, time*0.5)[0];
+    double s1 = SpeedHelper::applyProfile(profile, time*0.75)[0];
+    double s2 = SpeedHelper::applyProfile(profile, time*0.95)[0];
+    double s3 = SpeedHelper::applyProfile(profile, time*1.0)[0];
 
     // add another points
     vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
     vector<double> next_wp1 = MapTransformer::getXY(s + s1, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
     vector<double> next_wp2 = MapTransformer::getXY(s + s2, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp3 = MapTransformer::getXY(s + s3, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
     ptsx.push_back(next_wp0[0]);
     ptsx.push_back(next_wp1[0]);
     ptsx.push_back(next_wp2[0]);
+    ptsx.push_back(next_wp3[0]);
 
     ptsy.push_back(next_wp0[1]);
     ptsy.push_back(next_wp1[1]);
     ptsy.push_back(next_wp2[1]);
+    ptsy.push_back(next_wp3[1]);
 
     // Shift car reference to 0 degrees
     for (int i = 0; i < ptsx.size(); i++)
@@ -72,9 +76,14 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
     path_x.clear();
     path_y.clear();
 
+    double hypotenuse = sqrt(30*30 + trajectory(30)*trajectory(30));
+    double scale = 30.0 / hypotenuse;
+
     for (int i = 1; i <= time / 0.02; i++)
     {
-        vector<double> data = SpeedHelper::applyProfile(profile, i * 0.02);
+        double t = i * 0.02 * scale;
+
+        vector<double> data = SpeedHelper::applyProfile(profile, t);
 
         double x_point = data[0];
         double y_point = trajectory(x_point);
