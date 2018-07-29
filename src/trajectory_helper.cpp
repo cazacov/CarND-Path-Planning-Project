@@ -13,10 +13,7 @@ using namespace std;
 
 Trajectory TrajectoryHelper::buildTrajectory(
         double start_x, double start_y, double start_yaw, double s,
-        const vector<double> profile, int lane, double time,
-        const std::vector<double>& map_waypoints_x,
-        const std::vector<double>& map_waypoints_y,
-        const std::vector<double>& map_waypoints_s) {
+        const vector<double>& profile, int lane, double time) {
 
     vector<double> ptsx;
     vector<double> ptsy;

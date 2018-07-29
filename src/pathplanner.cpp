@@ -109,6 +109,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     int lane_index = 0;
 
+    TrajectoryHelper trajectoryHelper(map_waypoints_x, map_waypoints_y, map_waypoints_s, map_waypoints_dx, map_waypoints_dy);
+
     Trajectory best_trajectory;
 
     while (t_target_speed > kMinSpeed) {
@@ -126,10 +128,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         target_lane = possible_lanes[lane_index];
 
 
-        Trajectory trajectory = TrajectoryHelper::buildTrajectory(t_start_x, t_start_y, t_start_yaw, t_start_s, profile,
+        Trajectory trajectory = trajectoryHelper.buildTrajectory(t_start_x, t_start_y, t_start_yaw, t_start_s, profile,
                                                               target_lane,
-                                                              time_frame, map_waypoints_x, map_waypoints_y,
-                                                              map_waypoints_s);
+                                                              time_frame);
 
 
         unsigned long existing_points = next_x_vals.size();
