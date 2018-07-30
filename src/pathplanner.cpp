@@ -59,9 +59,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_speed = car_speed;
     double t_start_acceleration = 0;
     double t_start_s = car_s;
-
-    int current_lane = MapTransformer::d2lane(frenet_d);
-
+    double t_start_d = car_d;
 
     if (previous_path_x.size() > 25) {
         previous_path_x.resize(25);
@@ -77,10 +75,13 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         vector<double> end_frenet = MapTransformer::getFrenet(t_start_x, t_start_y, t_start_yaw, map_waypoints_x,
                                                               map_waypoints_y);
         t_start_s = end_frenet[0];
+        t_start_d = end_frenet[1];
 
         PathHelper::estimate_v_a(previous_path_x, previous_path_y, min_tail_points, t_start_speed,
                                  t_start_acceleration);
     }
+
+    int start_lane = MapTransformer::d2lane(t_start_d);
 
     next_x_vals.clear();
     next_y_vals.clear();
@@ -98,8 +99,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     vector<int> possible_lanes;
 
-    bool can_left = current_lane > 0;
-    bool can_right = current_lane < 2;
+    bool can_left = start_lane > 0;
+    bool can_right = start_lane < 2;
 
     if (lane_change_lock == 1)
     {
@@ -115,14 +116,21 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         possible_lanes.push_back(fix_lane);
     }
     else {
-        possible_lanes.push_back(current_lane);    // First try to to stay in the current lane. That's most comfortable.
+        possible_lanes.push_back(start_lane);    // First try to to stay in the current lane. That's most comfortable.
         if (can_left) {
-            possible_lanes.push_back(current_lane - 1);
+            possible_lanes.push_back(start_lane - 1);
         }
         if (can_right) {
-            possible_lanes.push_back(current_lane + 1);
+            possible_lanes.push_back(start_lane + 1);
         }
     }
+
+    char buf[4];
+    for (int i = 0; i < possible_lanes.size(); i++)
+    {
+        buf[i] = possible_lanes[i] + '0';
+    }
+    buf[possible_lanes.size()] = '\0';
 
 
     int lane_index = 0;
@@ -132,7 +140,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     Trajectory best_trajectory;
 
-    cout << setw(5) << iteration;
+    cout << setw(5) << iteration << setw(4) << left << buf;
 
     while (t_target_speed > kMinSpeed) {
 
@@ -150,13 +158,13 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
 
         Trajectory trajectory = trajectoryHelper.buildTrajectory(
-                t_start_x, t_start_y, t_start_yaw, t_start_s, current_lane,
+                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
                 profile, target_lane, time_frame);
 
         cout << "\tL: "<< target_lane << "\tv:" << setw(6) << t_target_speed;
 
 
-        bool is_valid = trajectoryHelper.validate(sensor_fusion, t_start_yaw, current_lane, trajectory, start_time);
+        bool is_valid = trajectoryHelper.validate(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
 
 /*
         cout << setw(5) << iteration
@@ -201,14 +209,14 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                 if (t_target_speed < kMinSpeed) {
                     // Stay in the current lane
                     best_trajectory = trajectoryHelper.buildTrajectory(
-                            t_start_x, t_start_y, t_start_yaw, t_start_s, current_lane,
-                            profile, current_lane, time_frame);
+                            t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                            profile, start_lane, time_frame);
                 }
             }
         } else {
             best_trajectory = trajectory;
 
-            if (current_lane != target_lane && lane_change_lock == 0)
+            if (start_lane != target_lane && lane_change_lock == 0)
             {
                 lane_change_lock = 100;
                 fix_lane = target_lane;
