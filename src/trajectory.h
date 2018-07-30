@@ -17,6 +17,13 @@ public:
     std::vector<double> path_y;
     std::vector<double> path_v;
     std::vector<double> path_a;
+
+    double collision_my_s;
+    double collision_my_d;
+    double collision_other_s;
+    double collision_other_d;
+    double collision_time;
+    int collision_other_id;
 };
 
 

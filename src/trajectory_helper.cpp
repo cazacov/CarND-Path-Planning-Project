@@ -14,7 +14,7 @@ using namespace std;
 
 Trajectory TrajectoryHelper::buildTrajectory(
         double start_x, double start_y, double start_yaw, double s,
-        const vector<double>& profile, int lane, double time) {
+        int start_lane, const vector<double>& profile, int target_lane, double time) {
 
     vector<double> ptsx;
     vector<double> ptsy;
@@ -30,16 +30,37 @@ Trajectory TrajectoryHelper::buildTrajectory(
     ptsy.push_back(prev_y);
     ptsy.push_back(start_y);
 
-    double s0 = SpeedHelper::applyProfile(profile, time*0.6)[0];
-    double s1 = SpeedHelper::applyProfile(profile, time*0.75)[0];
-    double s2 = SpeedHelper::applyProfile(profile, time*0.95)[0];
-    double s3 = SpeedHelper::applyProfile(profile, time*1.0)[0];
+    double t1;
+    double t2;
+    double t3;
+    double t4;
+
+    if (start_lane == target_lane)
+    {
+        // prefer more precise trajectory
+        t1 = 0.4;
+        t2 = 0.7;
+        t3 = 0.9;
+        t4 = 1;
+    }
+    else {
+        // prefer more smooth trajectory
+        t1 = 0.7;
+        t2 = 0.8;
+        t3 = 0.9;
+        t4 = 1;
+    }
+
+    double s0 = SpeedHelper::applyProfile(profile, time*t1)[0];
+    double s1 = SpeedHelper::applyProfile(profile, time*t2)[0];
+    double s2 = SpeedHelper::applyProfile(profile, time*t3)[0];
+    double s3 = SpeedHelper::applyProfile(profile, time*t4)[0];
 
     // add another points
-    vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp1 = MapTransformer::getXY(s + s1, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp2 = MapTransformer::getXY(s + s2, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp3 = MapTransformer::getXY(s + s3, 2+4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp1 = MapTransformer::getXY(s + s1, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp2 = MapTransformer::getXY(s + s2, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp3 = MapTransformer::getXY(s + s3, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
     ptsx.push_back(next_wp0[0]);
     ptsx.push_back(next_wp1[0]);
@@ -118,7 +139,7 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
 }
 
 bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
-                           const Trajectory &trajectory, double start_time) {
+                           Trajectory &trajectory, double start_time) {
     bool result = true;
 
     for (int i = 0; i < trajectory.path_x.size(); i++) {
@@ -156,7 +177,14 @@ bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, dou
             }
 
             if (car_s > (my_s - 10) && car_s - my_s < min_distance) {
-                if (fabs(my_d - car_d) < 3) {
+                if (fabs(my_d - car_d) < 2.5) {
+
+                    trajectory.collision_my_s = my_s;
+                    trajectory.collision_my_d = my_d;
+                    trajectory.collision_other_s = car_s;
+                    trajectory.collision_other_d = car_d;
+                    trajectory.collision_other_id = car_id;
+                    trajectory.collision_time = time;
                     result = false;
                     break;
                 }

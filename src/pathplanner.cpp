@@ -33,6 +33,9 @@ const double kMinSpeed = 20 * 0.447; // 20 MPH  if cannot avoid collision brake 
 int iteration = 0;
 double last_acc = 0;
 double last_v = 0;
+int lane_change_lock = 0;
+int fix_lane = 0;
+
 
 
 void
@@ -98,14 +101,29 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     bool can_left = current_lane > 0;
     bool can_right = current_lane < 2;
 
-    possible_lanes.push_back(current_lane);    // First try to to stay in the current lane. That's most comfortable.
+    if (lane_change_lock == 1)
+    {
+        cout << "Lane free";
+    }
+    if (lane_change_lock > 0)
+    {
+        lane_change_lock--;
+    }
 
-    if (can_left) {
-        possible_lanes.push_back(current_lane - 1);
+    if (lane_change_lock > 0 )
+    {
+        possible_lanes.push_back(fix_lane);
     }
-    if (can_right) {
-        possible_lanes.push_back(current_lane + 1);
+    else {
+        possible_lanes.push_back(current_lane);    // First try to to stay in the current lane. That's most comfortable.
+        if (can_left) {
+            possible_lanes.push_back(current_lane - 1);
+        }
+        if (can_right) {
+            possible_lanes.push_back(current_lane + 1);
+        }
     }
+
 
     int lane_index = 0;
 
@@ -132,7 +150,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
 
         Trajectory trajectory = trajectoryHelper.buildTrajectory(
-                t_start_x, t_start_y, t_start_yaw, t_start_s,
+                t_start_x, t_start_y, t_start_yaw, t_start_s, current_lane,
                 profile, target_lane, time_frame);
 
         cout << "\tL: "<< target_lane << "\tv:" << setw(6) << t_target_speed;
@@ -167,24 +185,36 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 */
 
         if (!is_valid) {
+            cout << "\tHit car " << setw(2) << trajectory.collision_other_id
+                << "\ts=" << setw(6) << trajectory.collision_other_s
+                << "\td=" << setw(6) << trajectory.collision_other_d
+                << "\tmy_s=" << setw(6) << trajectory.collision_my_s
+                << "\tmy_d=" << setw(6) << trajectory.collision_my_d
+                << "\ttime=" << setw(6) << trajectory.collision_time;
             if (lane_index < possible_lanes.size() - 1) {
                 lane_index++; // try next lane
 //                cout << "Trying lane " << possible_lanes[lane_index] << endl;
             } else {
                 lane_index = 0;
                 t_target_speed -= 0.447;    // Try to drive slower
-                cout << "\tbraking";
 
                 if (t_target_speed < kMinSpeed) {
-                    cout << "Min speed! ";
                     // Stay in the current lane
                     best_trajectory = trajectoryHelper.buildTrajectory(
-                            t_start_x, t_start_y, t_start_yaw, t_start_s,
+                            t_start_x, t_start_y, t_start_yaw, t_start_s, current_lane,
                             profile, current_lane, time_frame);
                 }
             }
         } else {
             best_trajectory = trajectory;
+
+            if (current_lane != target_lane && lane_change_lock == 0)
+            {
+                lane_change_lock = 100;
+                fix_lane = target_lane;
+                cout << "Lane lock";
+            }
+
             cout << "\tOk" << endl;
             break;
         }
