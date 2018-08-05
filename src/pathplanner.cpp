@@ -61,9 +61,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_s = car_s;
     double t_start_d = car_d;
 
-    if (previous_path_x.size() > 25) {
-        previous_path_x.resize(25);
-        previous_path_y.resize(25);
+    if (previous_path_x.size() > 13) {
+        previous_path_x.resize(13);
+        previous_path_y.resize(13);
     }
 
     const int min_tail_points = 10;
@@ -140,7 +140,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     Trajectory best_trajectory;
 
-    cout << setw(5) << iteration << setw(4) << left << buf;
+    cout << setw(5) << iteration << setw(3) << left << start_lane << setw(4) << left << buf;
+    cout    << "\t" << setw(5) << t_start_s
+            << "\t" << setw(5) << t_start_speed;
 
     while (t_target_speed > kMinSpeed) {
 
@@ -196,9 +198,10 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
             cout << "\tHit car " << setw(2) << trajectory.collision_other_id
                 << "\ts=" << setw(6) << trajectory.collision_other_s
                 << "\td=" << setw(6) << trajectory.collision_other_d
-                << "\tmy_s=" << setw(6) << trajectory.collision_my_s
+                << "\tmy_s=" << setw(6) << setprecision(6) << trajectory.collision_my_s
                 << "\tmy_d=" << setw(6) << trajectory.collision_my_d
-                << "\ttime=" << setw(6) << trajectory.collision_time;
+                << "\ttime=" << setw(6) << trajectory.collision_time
+                << "\tds=" << setw(6) << trajectory.collision_other_s - car_s;
             if (lane_index < possible_lanes.size() - 1) {
                 lane_index++; // try next lane
 //                cout << "Trying lane " << possible_lanes[lane_index] << endl;
@@ -211,8 +214,11 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                     best_trajectory = trajectoryHelper.buildTrajectory(
                             t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
                             profile, start_lane, time_frame);
+                    cout << "" << " Braking!" << endl;
+                    break;
                 }
             }
+            cout << endl << "\t\t\t\t\t\t\t";
         } else {
             best_trajectory = trajectory;
 
@@ -220,13 +226,15 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
             {
                 lane_change_lock = 100;
                 fix_lane = target_lane;
-                cout << "Lane lock";
+                cout << " Changing to lane " << target_lane;
+            }
+            else {
+                cout << " Remain in lane " << target_lane;
             }
 
-            cout << "\tOk" << endl;
+            cout << endl;
             break;
         }
-        cout << endl;
     }
 
     for (int i = 0; i < best_trajectory.path_x.size(); i++) {

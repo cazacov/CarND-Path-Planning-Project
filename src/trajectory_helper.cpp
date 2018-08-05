@@ -170,14 +170,18 @@ bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, dou
             vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
                                                           map_waypoints_y);
 
-            double min_distance = 30;
-            if (car_lane != current_lane)   // add penalty for changing lane
+            double min_s_distance = trajectory.path_v[i];   // At list 1 second distance to next car
+            double min_back_s = 0;   // Ignore cars behind us
+            double min_d_distance = 2.0;
+            if (car_lane != current_lane)       // add penalty for changing lane
             {
-                min_distance += 10;
+                //min_s_distance += 10;
+                double min_d_distance = 2.6;    //
+                min_back_s = 10; // do not change lane if there are other cars behind close to us
             }
 
-            if (car_s > (my_s - 10) && car_s - my_s < min_distance) {
-                if (fabs(my_d - car_d) < 2.5) {
+            if (car_s > (my_s - min_back_s) && car_s - my_s < min_s_distance) {
+                if (fabs(my_d - car_d) < min_d_distance) {
 
                     trajectory.collision_my_s = my_s;
                     trajectory.collision_my_d = my_d;
