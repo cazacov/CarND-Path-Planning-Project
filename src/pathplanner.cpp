@@ -166,7 +166,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         cout << "\tL: "<< target_lane << "\tv:" << setw(6) << t_target_speed;
 
 
-        bool is_valid = trajectoryHelper.validate(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
+        bool is_valid = trajectoryHelper.check_collision(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
 
 /*
         cout << setw(5) << iteration
@@ -211,9 +211,16 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
                 if (t_target_speed < kMinSpeed) {
                     // Stay in the current lane
-                    best_trajectory = trajectoryHelper.buildTrajectory(
-                            t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
-                            profile, start_lane, time_frame);
+                    if (!lane_change_lock) {
+                        best_trajectory = trajectoryHelper.buildTrajectory(
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                                profile, start_lane, time_frame);
+                    }
+                    else {
+                        best_trajectory = trajectoryHelper.buildTrajectory(
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                                profile, fix_lane , time_frame);
+                    }
                     cout << "" << " Braking!" << endl;
                     break;
                 }

@@ -9,6 +9,7 @@
 #include <math.h>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -122,8 +123,14 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         double x_ref = x_point;
         double y_ref = y_point;
 
-        double local_yaw = atan2(trajectory.spline.deriv(1, x_point), 1);
+        double deriv1 = trajectory.spline.deriv(1, x_point);
+        double deriv2 = trajectory.spline.deriv(2, x_point);
+
+        double local_yaw = atan2(deriv1, 1);
         dt = 0.02 * cos(local_yaw);
+
+        // curvature
+        double k = fabs(deriv2) / pow(1 + deriv1 * deriv1, 3.0/2.0 );
 
         x_point = x_ref * cos(start_yaw) - y_ref*sin(start_yaw);
         y_point = x_ref * sin(start_yaw) + y_ref*cos(start_yaw);
@@ -135,11 +142,14 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_y.push_back(y_point);
         trajectory.path_v.push_back(data[1]);
         trajectory.path_a.push_back(data[2]);
+        trajectory.path_k.push_back(k);
     }
+    trajectory.update_metrics(0.02);
 }
 
-bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
-                           Trajectory &trajectory, double start_time) {
+bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusion, double t_start_yaw,
+                                       int current_lane,
+                                       Trajectory &trajectory, double start_time) {
     bool result = true;
 
     for (int i = 0; i < trajectory.path_x.size(); i++) {
@@ -201,3 +211,19 @@ bool TrajectoryHelper::validate(const vector<vector<double>> &sensor_fusion, dou
     }
     return result;
 }
+
+bool TrajectoryHelper::check_feasibility(Trajectory& trajectory, const double max_speed, const double max_acceleration) {
+    if (trajectory.max_speed > max_speed )
+    {
+        cout << "\tExceeds speed limit " << std::setw(2) << trajectory.max_speed;
+        return false;
+    }
+    /*
+    if (trajectory.max_normal_acceleration > max_acceleration)
+    {
+        cout << "\tExceeds acceleration limit " << std::setw(2) << trajectory.max_normal_acceleration;
+        return false;
+    }*/
+    return true;
+}
+
