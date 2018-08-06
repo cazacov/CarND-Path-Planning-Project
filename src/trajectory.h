@@ -16,9 +16,8 @@ public:
     std::vector<double> path_x;
     std::vector<double> path_y;
     std::vector<double> path_v;
-    std::vector<double> path_v_p;
     std::vector<double> path_a;
-    std::vector<double> path_c; // point curvature
+    std::vector<double> v_tan;
     std::vector<double> path_k; // spline curvature
 
     double collision_my_s;
@@ -31,8 +30,7 @@ public:
     void update_metrics(double time_step);
 
     double max_speed;
-    double mean_normal_acceleration;
-    double max_normal_acceleration;
+    double max_acceleration;
 };
 
 

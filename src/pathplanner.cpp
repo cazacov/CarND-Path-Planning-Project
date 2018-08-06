@@ -165,8 +165,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         cout << "\tL: "<< target_lane << "\tv:" << setw(6) << t_target_speed;
 
+        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 8);
 
-        bool is_valid = trajectoryHelper.check_collision(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
+        bool is_valid = true;
+        if (is_feasible) {
+            is_valid = trajectoryHelper.check_collision(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
+        }
 
 /*
         cout << setw(5) << iteration
@@ -194,14 +198,16 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
              << endl;
 */
 
-        if (!is_valid) {
-            cout << "\tHit car " << setw(2) << trajectory.collision_other_id
-                << "\ts=" << setw(6) << trajectory.collision_other_s
-                << "\td=" << setw(6) << trajectory.collision_other_d
-                << "\tmy_s=" << setw(6) << setprecision(6) << trajectory.collision_my_s
-                << "\tmy_d=" << setw(6) << trajectory.collision_my_d
-                << "\ttime=" << setw(6) << trajectory.collision_time
-                << "\tds=" << setw(6) << trajectory.collision_other_s - car_s;
+        if (!is_valid || !is_feasible) {
+            if (!is_valid) {
+                cout << "\tHit car " << setw(2) << trajectory.collision_other_id
+                     << "\ts=" << setw(6) << trajectory.collision_other_s
+                     << "\td=" << setw(6) << trajectory.collision_other_d
+                     << "\tmy_s=" << setw(6) << setprecision(6) << trajectory.collision_my_s
+                     << "\tmy_d=" << setw(6) << trajectory.collision_my_d
+                     << "\ttime=" << setw(6) << trajectory.collision_time
+                     << "\tds=" << setw(6) << trajectory.collision_other_s - car_s;
+            }
             if (lane_index < possible_lanes.size() - 1) {
                 lane_index++; // try next lane
 //                cout << "Trying lane " << possible_lanes[lane_index] << endl;
@@ -236,7 +242,8 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                 cout << " Changing to lane " << target_lane;
             }
             else {
-                cout << " Remain in lane " << target_lane;
+                cout << " Lane " << target_lane;
+                cout << "\t" << "man: " << setw(6) << trajectory.max_acceleration;
             }
 
             cout << endl;

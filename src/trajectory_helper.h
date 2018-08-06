@@ -40,7 +40,7 @@ public:
     bool check_collision(const std::vector<std::vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
                          Trajectory &trajectory, double start_time);
 
-    bool check_feasibility(Trajectory& trajectory, const double max_speed, const double max_acceleration);
+    bool check_limits(Trajectory &trajectory, const double max_speed, const double max_acceleration);
 };
 
 

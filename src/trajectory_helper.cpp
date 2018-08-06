@@ -212,18 +212,17 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
     return result;
 }
 
-bool TrajectoryHelper::check_feasibility(Trajectory& trajectory, const double max_speed, const double max_acceleration) {
+bool TrajectoryHelper::check_limits(Trajectory &trajectory, const double max_speed, const double max_acceleration) {
     if (trajectory.max_speed > max_speed )
     {
         cout << "\tExceeds speed limit " << std::setw(2) << trajectory.max_speed;
         return false;
     }
-    /*
-    if (trajectory.max_normal_acceleration > max_acceleration)
+    if (trajectory.max_acceleration > max_acceleration)
     {
-        cout << "\tExceeds acceleration limit " << std::setw(2) << trajectory.max_normal_acceleration;
+        cout << "\tExceeds acceleration limit " << std::setw(2) << trajectory.max_acceleration;
         return false;
-    }*/
+    }
     return true;
 }
 

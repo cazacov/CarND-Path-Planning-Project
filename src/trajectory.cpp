@@ -4,73 +4,60 @@
 
 #include "trajectory.h"
 #include <math.h>
+using namespace std;
 
-void Trajectory::update_metrics(double time_step)
-{
-    path_c.clear();
-    if (path_x.size() < 3)
-    {
-        for (int i = 0; i < path_x.size(); i++)
-        {
-            path_c.push_back(0);
-        }
-        return;
-    }
-
-    path_c.push_back(0);
-    for (int i = 0; i < path_x.size() - 2; i++)
-    {
-        double dx1 = path_x[i + 1] - path_x[i];
-        double dx2 = path_x[i + 2] - path_x[i-1];
-        double dx3 = path_x[i + 2] - path_x[i];
-        double dy1 = path_y[i + 1] - path_y[i];
-        double dy2 = path_y[i + 2] - path_y[i-1];
-        double dy3 = path_y[i + 2] - path_y[i];
-
-        double mag_1 = sqrt(dx1*dx1 + dy1*dy1);
-        double mag_2 = sqrt(dx2*dx2 + dy2*dy2);
-        double mag_3 = sqrt(dx3*dx3 + dy3*dy3);
-
-        if (mag_1 < 0.0001 || mag_2 < 0.0001)
-        {
-            // cannot calculate
-            path_c.push_back(1000000);  // some very big number
-        }
-        else {
-            double angle = acos((dx1*dx2 + dy1*dy2) / mag_1 / mag_2);
-            double c = 2 * sin(angle) / mag_3;
-            path_c.push_back(c);
-        }
-    }
-    path_c.push_back(0);
+void Trajectory::update_metrics(double time_step) {
 
     // calculate tangential velocity
-    max_speed = path_v[0];
-    path_v_p.clear();
-    path_v_p.push_back(path_v[0]);
-    for (int i = 0; i < path_x.size()-1; i++)
-    {
+    v_tan.clear();
+    v_tan.push_back(path_v[0]);
+    for (int i = 0; i < path_x.size() - 1; i++) {
         double dx = path_x[i + 1] - path_x[i];
         double dy = path_y[i + 1] - path_y[i];
-        double v = sqrt(dx*dx+dy*dy) / time_step;
-        path_v_p.push_back(v);
-        if (max_speed < v)
-        {
-            max_speed = v;
-        }
+        double v = sqrt(dx * dx + dy * dy) / time_step;
+        v_tan.push_back(v);
+    }
+
+    // calculate tangential acceleration
+    vector<double> a_tan;
+    for (int i = 0; i < v_tan.size() - 1; i++) {
+        double v1 = v_tan[i];
+        double v2 = v_tan[i + 1];
+        double a = fabs(v2 - v1) / time_step;
+        a_tan.push_back(a);
+    }
+    if (a_tan.size() > 3) {
+        a_tan.insert(a_tan.begin(), (a_tan[1] + a_tan[2]) / 2);
+    } else {
+        a_tan.insert(a_tan.begin(), a_tan.front());
     }
 
     // calculate normal acceleration
-    mean_normal_acceleration = 0.0;
-    max_normal_acceleration = 0.0;
-    for (int i = 0; i < path_v_p.size(); i++)
-    {
-        double acc_norm = path_v_p[i] * path_v_p[i] * path_k[i];
-        if (acc_norm > max_normal_acceleration)
-        {
-            max_normal_acceleration = acc_norm;
-        }
-        mean_normal_acceleration += acc_norm;
+    vector<double> a_norm;
+    for (int i = 0; i < v_tan.size(); i++) {
+        double acc_norm = v_tan[i] * v_tan[i] * path_k[i];
+        a_norm.push_back(acc_norm);
     }
-    mean_normal_acceleration = mean_normal_acceleration /  path_v_p.size();
+
+    vector<double> a_total_sum;
+    a_total_sum.push_back(0);
+    double a_sum = 0;
+    for (int i = 0; i < a_tan.size(); i++) {
+        double at = a_tan[i];
+        double an = a_norm[i];
+        double a_total = sqrt(at * at + an * an);
+        a_sum += a_total;
+        a_total_sum.push_back(a_sum);
+    }
+
+    // Calculate sliding averages and select max value
+    max_acceleration = 0;
+    int window_size = 25;   // 0.5 second
+
+    for (int i = 0; i < a_total_sum.size() - window_size; i++) {
+        double average = (a_total_sum[i + window_size] - a_total_sum[i]) / window_size;
+        if (average > max_acceleration) {
+            max_acceleration = average;
+        }
+    }
 }
