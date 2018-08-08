@@ -13,6 +13,7 @@ public:
     static double rad2deg(double x);
     static double distance(double x1, double y1, double x2, double y2);
     static int d2lane(double d);
+    static double lane2d(int lane);
 };
 
 #endif //PATH_PLANNING_MAPTRANSFORMER_H

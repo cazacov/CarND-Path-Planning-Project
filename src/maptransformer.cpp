@@ -132,14 +132,25 @@ vector<double> MapTransformer::getXY(double s, double d, const vector<double> &m
 }
 
 int MapTransformer::d2lane(double d) {
-    int lane = d / 4;
-    if (lane < 0)
+    if (d < 4)
     {
-        lane = 0;
+        return 0;
     }
-    if (lane > 2)
+    else if (d < 8)
     {
-        lane = 2;
+        return 1;
     }
-    return lane;
+    else {
+        return 2;
+    }
+}
+
+double MapTransformer::lane2d(int lane) {
+    if (lane < 2)
+    {
+        return 2.0 + lane * 4;
+    }
+    else {
+        return 1.8 + lane * 4;  // keep away from border
+    }
 }

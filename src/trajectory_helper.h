@@ -32,8 +32,8 @@ public:
     }
 
 public:
-    Trajectory buildTrajectory(double start_x, double start_y, double start_yaw, double s,
-            int start_lane, const std::vector<double>& profile, int target_lane, double time);
+    Trajectory buildTrajectory(double start_x, double start_y, double start_yaw, double s, int start_lane,
+                                   const std::vector<double> &profile, int target_lane, double time, bool is_changing_lane);
 
     void generatePath(double start_x, double start_y, double start_yaw, const std::vector<double>& profile, double time, Trajectory& trajectory);
 

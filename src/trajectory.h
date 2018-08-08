@@ -26,6 +26,11 @@ public:
     double collision_other_d;
     double collision_time;
     int collision_other_id;
+    double collision_min_d;
+    double collision_min_s;
+
+    std::vector<std::vector<double>> cars_sd;
+    std::vector<std::vector<double>> my_sd;
 
     void update_metrics(double time_step);
 

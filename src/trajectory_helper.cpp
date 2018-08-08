@@ -13,9 +13,8 @@
 
 using namespace std;
 
-Trajectory TrajectoryHelper::buildTrajectory(
-        double start_x, double start_y, double start_yaw, double s,
-        int start_lane, const vector<double>& profile, int target_lane, double time) {
+Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, double start_yaw, double s, int start_lane,
+                                             const std::vector<double> &profile, int target_lane, double time, bool is_changing_lane) {
 
     vector<double> ptsx;
     vector<double> ptsy;
@@ -38,11 +37,21 @@ Trajectory TrajectoryHelper::buildTrajectory(
 
     if (start_lane == target_lane)
     {
-        // prefer more precise trajectory
-        t1 = 0.4;
-        t2 = 0.7;
-        t3 = 0.9;
-        t4 = 1;
+
+        if (!is_changing_lane) {
+            // prefer more precise trajectory
+            t1 = 0.3;
+            t2 = 0.6;
+            t3 = 0.8;
+            t4 = 1;
+        }
+        else {
+            // prefer more smooth trajectory
+            t1 = 0.45;
+            t2 = 0.7;
+            t3 = 0.9;
+            t4 = 1;
+        }
     }
     else {
         // prefer more smooth trajectory
@@ -58,10 +67,10 @@ Trajectory TrajectoryHelper::buildTrajectory(
     double s3 = SpeedHelper::applyProfile(profile, time*t4)[0];
 
     // add another points
-    vector<double> next_wp0 = MapTransformer::getXY(s + s0, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp1 = MapTransformer::getXY(s + s1, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp2 = MapTransformer::getXY(s + s2, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp3 = MapTransformer::getXY(s + s3, 2+4*target_lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp0 = MapTransformer::getXY(s + s0, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp1 = MapTransformer::getXY(s + s1, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp2 = MapTransformer::getXY(s + s2, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp3 = MapTransformer::getXY(s + s3, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
     ptsx.push_back(next_wp0[0]);
     ptsx.push_back(next_wp1[0]);
@@ -152,9 +161,15 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
                                        Trajectory &trajectory, double start_time) {
     bool result = true;
 
+    trajectory.my_sd.clear();
+    trajectory.cars_sd.clear();
+
     for (int i = 0; i < trajectory.path_x.size(); i++) {
 
-        double time = start_time + (i + 1) * 0.02;
+        vector<double> carsd;
+
+        double delta_time = (i + 1) * 0.02;
+        double time = start_time + delta_time;
         double my_x = trajectory.path_x[i];
         double my_y = trajectory.path_y[i];
         double my_yaw = t_start_yaw;
@@ -165,6 +180,9 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
         vector<double> my_frenet = MapTransformer::getFrenet(my_x, my_y, my_yaw, map_waypoints_x, map_waypoints_y);
         double my_s = my_frenet[0];
         double my_d = my_frenet[1];
+        int my_lane = MapTransformer::d2lane(my_d);
+
+        trajectory.my_sd.push_back({my_s, my_d, trajectory.path_v[i]});
 
         for (int car = 0; car < sensor_fusion.size(); car++) {
             int car_id  = sensor_fusion[car][0];
@@ -173,24 +191,41 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
             double car_vx = sensor_fusion[car][3];
             double car_vy = sensor_fusion[car][4];
             double car_v = sqrt(car_vx * car_vx + car_vy * car_vy);
-            double car_s = sensor_fusion[car][5] + time * car_v;
+
+            double car_s0 = sensor_fusion[car][5];
+            double car_s = car_s0 + time * car_v;
             double car_d = sensor_fusion[car][6];
             int car_lane = MapTransformer::d2lane(car_d);
+
+            carsd.push_back(car_s);
+            carsd.push_back(car_d);
+
+            // TODO: check end of highway loop
+            if (car_s0 + 10 < my_s && car_lane == current_lane)
+            {
+                // Ignore cars behind me. They should keep safe distance.
+                continue;
+            }
+
+
+
+
             double car_yaw = atan2(car_vy, car_vx);
             vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
                                                           map_waypoints_y);
 
-            double min_s_distance = trajectory.path_v[i];   // At list 1 second distance to next car
+            // TODO: check end of highway loop
+            double min_s_distance = trajectory.path_v[i] * 1.5;   // At least 1.5 second distance to next car
             double min_back_s = 0;   // Ignore cars behind us
             double min_d_distance = 2.0;
             if (car_lane != current_lane)       // add penalty for changing lane
             {
-                //min_s_distance += 10;
-                double min_d_distance = 2.6;    //
-                min_back_s = 10; // do not change lane if there are other cars behind close to us
+                min_s_distance = trajectory.path_v[i] * 3.0;   // At least 3 seconds distance to next car
+                min_d_distance = 2.6;    //
+                min_back_s = 12.5; // do not change lane if there are other cars behind close to us
             }
 
-            if (car_s > (my_s - min_back_s) && car_s - my_s < min_s_distance) {
+            if (car_s > (my_s - min_back_s) && (car_s - my_s) < min_s_distance) {
                 if (fabs(my_d - car_d) < min_d_distance) {
 
                     trajectory.collision_my_s = my_s;
@@ -199,6 +234,8 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
                     trajectory.collision_other_d = car_d;
                     trajectory.collision_other_id = car_id;
                     trajectory.collision_time = time;
+                    trajectory.collision_min_d = min_d_distance;
+                    trajectory.collision_min_s = min_s_distance;
                     result = false;
                     break;
                 }
@@ -208,6 +245,7 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
         {
             break;
         }
+        trajectory.cars_sd.push_back(carsd);
     }
     return result;
 }
