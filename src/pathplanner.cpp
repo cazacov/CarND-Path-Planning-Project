@@ -70,7 +70,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     const int min_tail_points = 10;
     if (previous_path_x.size() >= min_tail_points) // we have some data from previous trajectory
     {
-        PathHelper::estimate_x_y_yaw(previous_path_x, previous_path_y, min_tail_points, t_start_x, t_start_y,
+        PathHelper::estimate_x_y_yaw(previous_path_x, previous_path_y, 2, t_start_x, t_start_y,
                                      t_start_yaw);
 
         vector<double> end_frenet = MapTransformer::getFrenet(t_start_x, t_start_y, t_start_yaw, map_waypoints_x,

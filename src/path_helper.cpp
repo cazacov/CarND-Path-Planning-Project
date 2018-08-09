@@ -23,20 +23,20 @@ void PathHelper::estimate_v_a(const vector<double> &previous_path_x, const vecto
     {
         poly_x.push_back(i-start_idx);
         poly_y.push_back(
-                MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx], previous_path_x[i], previous_path_y[i]) + 5);
+                MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx], previous_path_x[i], previous_path_y[i]));
     }
 
-    // Use polynomial approximation to estimate speed and acceleration at the end of the previous path
-    vector<double> coeff;
-    MathHelper::polyfit(poly_x, poly_y, coeff, 2);
+    // Approximate points with 2nd order polynomial
+    vector<double> coefficients;
+    MathHelper::polyfit(poly_x, poly_y, coefficients, 2);
 
-    double v0 = coeff[1] / 0.02;
-    double a0 = coeff[2] / (0.02 * 0.02) * 2;
+    double v0 = coefficients[1] / 0.02;
+    double a0 = coefficients[2] / (0.02 * 0.02) * 2;
 
     double t = 0.02 * (min_tail_points - 1);
 
     t_start_acceleration = a0;
-    t_start_speed =  v0 +  a0 * t;
+    t_start_speed =  v0 +  a0 * t;  // speed at the last point of previous path
 }
 
 void
@@ -45,7 +45,7 @@ PathHelper::estimate_x_y_yaw(const std::vector<double> &previous_path_x, const s
 
         double x_back = previous_path_x.back();
         double y_back = previous_path_y.back();
-        double x_prev = *(previous_path_x.end() - min_tail_points);  // -1 because the end() is referring past-the-end element
+        double x_prev = *(previous_path_x.end() - min_tail_points);
         double y_prev = *(previous_path_y.end() - min_tail_points);
 
         t_start_x = x_back;

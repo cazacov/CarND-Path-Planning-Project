@@ -180,9 +180,9 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
         double my_x = trajectory.path_x[i];
         double my_y = trajectory.path_y[i];
         double my_yaw = t_start_yaw;
-        if (i > 0) {
-            my_yaw = atan2(trajectory.path_y[i] - trajectory.path_y[i - 1],
-                                  trajectory.path_x[i] - trajectory.path_x[i - 1]);
+        if (i > 2) {
+            my_yaw = atan2(trajectory.path_y[i] - trajectory.path_y[i - 2],
+                                  trajectory.path_x[i] - trajectory.path_x[i - 2]);
         }
         vector<double> my_frenet = MapTransformer::getFrenet(my_x, my_y, my_yaw, map_waypoints_x, map_waypoints_y);
         double my_s = my_frenet[0];
