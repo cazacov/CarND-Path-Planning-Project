@@ -14,7 +14,7 @@
 using namespace std;
 
 Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, double start_yaw, double start_s, double start_d, int start_lane,
-                                             AccelerationProfile& profile, int target_lane, double time, bool is_changing_lane) {
+    double start_speed, AccelerationProfile& profile, int target_lane, double time, bool is_changing_lane) {
 
     vector<double> ptsx;
     vector<double> ptsy;
@@ -114,7 +114,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     result.spline.set_points(ptsx, ptsy);
 
     generatePath(start_x, start_y, start_yaw, profile, time, result);
-
+    result.update_metrics(0.02, start_speed);
     return result;
 }
 
@@ -160,7 +160,6 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_a.push_back(profile.get_a(t));
         trajectory.path_k.push_back(k);
     }
-    trajectory.update_metrics(0.02);
 }
 
 bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusion, double t_start_yaw,
@@ -273,9 +272,9 @@ bool TrajectoryHelper::check_limits(Trajectory &trajectory, const double max_spe
         cout << "\tExceeds speed limit " << std::setw(2) << trajectory.max_speed;
         return false;
     }
-    if (trajectory.max_acceleration > max_acceleration)
+    if (trajectory.max_total_acceleration > max_acceleration)
     {
-        cout << "\tExceeds acceleration limit " << std::setw(2) << trajectory.max_acceleration;
+        cout << "\tExceeds acceleration limit " << std::setw(3) << trajectory.max_total_acceleration;
         return false;
     }
     return true;

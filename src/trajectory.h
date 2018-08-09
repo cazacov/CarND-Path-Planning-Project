@@ -35,10 +35,12 @@ public:
     std::vector<std::vector<double>> cars_sd;
     std::vector<std::vector<double>> my_sd;
 
-    void update_metrics(double time_step);
+    void update_metrics(double time_step, double initial_v);
 
     double max_speed;
-    double max_acceleration;
+    double max_total_acceleration;
+    double max_tan_acceleration;
+    double max_norm_acceleration;
 };
 
 

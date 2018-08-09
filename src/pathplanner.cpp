@@ -161,12 +161,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         Trajectory trajectory = trajectoryHelper.buildTrajectory(
                 t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d,
-                start_lane,
+                start_lane, t_start_speed,
                 profile, target_lane, time_frame, is_changing_lane);
 
         printf("\t\tL:%d v:%2.2f", target_lane, t_target_speed);
 
-        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 7);
+        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 7.5);
 
         bool is_valid = true;
         if (is_feasible) {
@@ -233,12 +233,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                     // Stay in the current lane
                     if (!lane_change_lock) {
                         best_trajectory = trajectoryHelper.buildTrajectory(
-                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane,
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane, t_start_speed,
                                 profile, start_lane, time_frame, is_changing_lane);
                     }
                     else {
                         best_trajectory = trajectoryHelper.buildTrajectory(
-                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane,
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane, t_start_speed,
                                 profile, fix_lane, time_frame, is_changing_lane);
                     }
                     cout << "" << " Braking!" << endl;
@@ -263,10 +263,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
             }
             else {
-                cout << " Lane " << target_lane;
-                cout << "\t" << "man: " << setw(6) << trajectory.max_acceleration;
+                printf(" Keep lane %d, acc=%1.1f  accT=%1.1f  accN=%1.1f ",
+                        target_lane, trajectory.max_total_acceleration, trajectory.max_tan_acceleration, trajectory.max_norm_acceleration);
             }
-
             cout << endl;
             break;
         }
