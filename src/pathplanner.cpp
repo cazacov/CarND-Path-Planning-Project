@@ -152,18 +152,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
     while (t_target_speed > kMinSpeed) {
 
-        vector<double> profile = SpeedHelper::calculateAccelerationProfile(
+        AccelerationProfile profile = SpeedHelper::calculateAccelerationProfile(
                 t_start_speed, t_start_acceleration,
                 t_target_speed, time_frame,
                 kMaxAcceleration, kMaxJerk);
 
-        double t_end_speed = profile[0];
-        double t_distance = profile[1];
-        double t_acc = profile[2];
-
-
         target_lane = possible_lanes[lane_index];
-
 
         Trajectory trajectory = trajectoryHelper.buildTrajectory(
                 t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d,

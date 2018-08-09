@@ -3,7 +3,7 @@
 
 using namespace Eigen;
 
-vector<double> SpeedHelper::calculateAccelerationProfile(
+AccelerationProfile SpeedHelper::calculateAccelerationProfile(
         double start_speed, double start_acceleration,
         double target_speed, double time_frame,
         const double max_acceleration, const double max_jerk)
@@ -51,8 +51,16 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
                         + a * time_step * time_step / 2.0
                         + jerk_2 * time_step * time_step * time_step / 6.0;
 
+    AccelerationProfile result;
 
-    return {
+    result.v = start_speed;
+    result.a = a0;
+    result.j = jerk_1;
+
+    return result;
+
+/*
+    {
         final_speed,
         distance_1 + distance_2,
         a,
@@ -67,66 +75,6 @@ vector<double> SpeedHelper::calculateAccelerationProfile(
         0,
         0
     };
-
-}
-
-vector<double> SpeedHelper::applyProfile(vector<double> profile, double time)
-{
-    double v0 = 0;
-    double a0 = 0;
-    double j0 = 0;
-
-//    if (time < profile[3])
-//    {
-        v0 = profile[4];
-        a0 = profile[5];
-        j0 = profile[6];
-/*    }
-    else if (time < profile[3] * 2)
-    {
-        v0 = profile[7];
-        a0 = profile[8];
-        j0 = profile[9];
-    }
-    else
-    {
-        v0 = profile[10];
-        a0 = profile[11];
-        j0 = profile[12];
-    }
 */
-    double distance = v0 * time + a0 * time * time / 2.0 + j0 * time * time * time / 6.0;
-    double speed = v0 + a0 * time + j0 * time * time / 2;
-    double acceleration = a0 + j0 * time;
-
-
-    return {distance, speed, acceleration};
-}
-
-vector<double>
-SpeedHelper::solveJmt(double start_speed, double final_speed, double start_acceleration, double time, double distance) {
-
-    vector<double> start { 0, start_speed, start_acceleration};
-    vector<double> end { distance, final_speed, 0};
-
-    double t2 = time*time;
-    double t3 = t2*time;
-    double t4 = t3*time;
-    double t5 = t4*time;
-
-    Matrix3d A;
-    A << t3, t4, t5,
-            3*t2, 4*t3, 5*t4,
-            6*time, 12*t2,  20*t3;
-
-    Vector3d B;
-
-    B << end[0] - (start[0] + start[1]*time + 1 / 2.0 * start[2] * t2),
-            end[1] - (start[1] + start[2] * time),
-            end[2] - start[2];
-
-
-    Vector3d x = A.colPivHouseholderQr().solve(B);
-    return {start[0], start[1], start[2]/2.0, x[0], x[1], x[2]};
 }
 

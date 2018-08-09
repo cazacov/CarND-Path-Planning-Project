@@ -14,7 +14,7 @@
 using namespace std;
 
 Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, double start_yaw, double start_s, double start_d, int start_lane,
-                                             const std::vector<double> &profile, int target_lane, double time, bool is_changing_lane) {
+                                             AccelerationProfile& profile, int target_lane, double time, bool is_changing_lane) {
 
     vector<double> ptsx;
     vector<double> ptsy;
@@ -68,10 +68,10 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
         t4 = 1;
     }
 
-    double s0 = SpeedHelper::applyProfile(profile, time*t1)[0];
-    double s1 = SpeedHelper::applyProfile(profile, time*t2)[0];
-    double s2 = SpeedHelper::applyProfile(profile, time*t3)[0];
-    double s3 = SpeedHelper::applyProfile(profile, time*t4)[0];
+    double s0 = profile.get_s(time*t1);
+    double s1 = profile.get_s(time*t2);
+    double s2 = profile.get_s(time*t3);
+    double s3 = profile.get_s(time*t4);
 
     // add another points
     vector<double> next_wp0 = MapTransformer::getXY(start_s + s0, d1, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -119,7 +119,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
 }
 
 
-void TrajectoryHelper::generatePath(double start_x, double start_y, double start_yaw, const std::vector<double> &profile,
+void TrajectoryHelper::generatePath(double start_x, double start_y, double start_yaw, AccelerationProfile &profile,
                                     double time, Trajectory& trajectory) {
     trajectory.path_x.clear();
     trajectory.path_y.clear();
@@ -133,9 +133,7 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
     {
         t += dt;
 
-        vector<double> data = SpeedHelper::applyProfile(profile, t);
-
-        double x_point = data[0];
+        double x_point = profile.get_s(t);
         double y_point = trajectory.spline(x_point);
 
         double x_ref = x_point;
@@ -158,8 +156,8 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
 
         trajectory.path_x.push_back(x_point);
         trajectory.path_y.push_back(y_point);
-        trajectory.path_v.push_back(data[1]);
-        trajectory.path_a.push_back(data[2]);
+        trajectory.path_v.push_back(profile.get_v(t));
+        trajectory.path_a.push_back(profile.get_a(t));
         trajectory.path_k.push_back(k);
     }
     trajectory.update_metrics(0.02);

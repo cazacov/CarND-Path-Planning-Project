@@ -8,6 +8,7 @@
 #include "spline.h"
 #include <vector>
 #include "trajectory.h"
+#include "acceleration_profile.h"
 
 class TrajectoryHelper {
 private:
@@ -33,9 +34,9 @@ public:
 
 public:
     Trajectory buildTrajectory(double start_x, double start_y, double start_yaw, double start_s, double start_d, int start_lane,
-                                   const std::vector<double> &profile, int target_lane, double time, bool is_changing_lane);
+                               AccelerationProfile& profile, int target_lane, double time, bool is_changing_lane);
 
-    void generatePath(double start_x, double start_y, double start_yaw, const std::vector<double>& profile, double time, Trajectory& trajectory);
+    void generatePath(double start_x, double start_y, double start_yaw, AccelerationProfile &profile, double time, Trajectory& trajectory);
 
     bool check_collision(const std::vector<std::vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
                          Trajectory &trajectory, double start_time);
