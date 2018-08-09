@@ -151,6 +151,6 @@ double MapTransformer::lane2d(int lane) {
         return 2.0 + lane * 4;
     }
     else {
-        return 1.8 + lane * 4;  // keep away from border
+        return 2.0 + lane * 4;  // keep away from border
     }
 }

@@ -20,6 +20,9 @@ public:
     std::vector<double> v_tan;
     std::vector<double> path_k; // spline curvature
 
+    int start_lane;
+    int target_lane;
+
     double collision_my_s;
     double collision_my_d;
     double collision_other_s;

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, double start_yaw, double s, int start_lane,
+Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, double start_yaw, double start_s, double start_d, int start_lane,
                                              const std::vector<double> &profile, int target_lane, double time, bool is_changing_lane) {
 
     vector<double> ptsx;
@@ -35,6 +35,11 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     double t3;
     double t4;
 
+    double d1 = MapTransformer::lane2d(target_lane);
+    double d2 = MapTransformer::lane2d(target_lane);
+    double d3 = MapTransformer::lane2d(target_lane);
+    double d4 = MapTransformer::lane2d(target_lane);
+
     if (start_lane == target_lane)
     {
 
@@ -47,9 +52,11 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
         }
         else {
             // prefer more smooth trajectory
-            t1 = 0.45;
-            t2 = 0.7;
-            t3 = 0.9;
+            t1 = 0.3;
+            d1 = d1 * 0.8 + start_d * 0.2;
+            t2 = 0.5;
+            d2 = d2 * 0.9 + start_d * 0.1;
+            t3 = 0.8;
             t4 = 1;
         }
     }
@@ -67,10 +74,10 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     double s3 = SpeedHelper::applyProfile(profile, time*t4)[0];
 
     // add another points
-    vector<double> next_wp0 = MapTransformer::getXY(s + s0, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp1 = MapTransformer::getXY(s + s1, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp2 = MapTransformer::getXY(s + s2, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-    vector<double> next_wp3 = MapTransformer::getXY(s + s3, MapTransformer::lane2d(target_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp0 = MapTransformer::getXY(start_s + s0, d1, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp1 = MapTransformer::getXY(start_s + s1, d2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp2 = MapTransformer::getXY(start_s + s2, d3, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+    vector<double> next_wp3 = MapTransformer::getXY(start_s + s3, d4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
     ptsx.push_back(next_wp0[0]);
     ptsx.push_back(next_wp1[0]);
@@ -93,6 +100,8 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     }
 
     Trajectory result;
+    result.start_lane = start_lane;
+    result.target_lane = target_lane;
 
     // check points
     for (int i = 0; i < ptsx.size() - 1; i++) {
@@ -201,28 +210,38 @@ bool TrajectoryHelper::check_collision(const vector<vector<double>> &sensor_fusi
             carsd.push_back(car_d);
 
             // TODO: check end of highway loop
-            if (car_s0 + 10 < my_s && car_lane == current_lane)
+            if (car_s0 + 10 < my_s && car_lane == trajectory.start_lane)
             {
                 // Ignore cars behind me. They should keep safe distance.
                 continue;
             }
 
 
-
-
             double car_yaw = atan2(car_vy, car_vx);
             vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
                                                           map_waypoints_y);
+
+
+
+            bool trajectory_changes_lane = trajectory.start_lane != trajectory.target_lane;
 
             // TODO: check end of highway loop
             double min_s_distance = trajectory.path_v[i] * 1.5;   // At least 1.5 second distance to next car
             double min_back_s = 0;   // Ignore cars behind us
             double min_d_distance = 2.0;
-            if (car_lane != current_lane)       // add penalty for changing lane
+
+            if (trajectory_changes_lane)
             {
-                min_s_distance = trajectory.path_v[i] * 3.0;   // At least 3 seconds distance to next car
-                min_d_distance = 2.6;    //
-                min_back_s = 12.5; // do not change lane if there are other cars behind close to us
+                min_d_distance = 2.6;   // more defensive collision check
+
+                if (car_lane == trajectory.start_lane)
+                {
+                    min_s_distance = trajectory.path_v[i] * 1; // We can shortly pass near another car in my lane when changing to another lane
+                }
+                else {
+                    min_s_distance = trajectory.path_v[i] * 2; // add penalty for changing lane
+                    min_back_s = 12.5; // Check if there are cars behind close to us
+                }
             }
 
             if (car_s > (my_s - min_back_s) && (car_s - my_s) < min_s_distance) {

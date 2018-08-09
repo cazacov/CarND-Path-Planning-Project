@@ -62,9 +62,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_s = car_s;
     double t_start_d = car_d;
 
-    if (previous_path_x.size() > 13) {
-        previous_path_x.resize(13);
-        previous_path_y.resize(13);
+    if (previous_path_x.size() > 12) {
+        previous_path_x.resize(12);
+        previous_path_y.resize(12);
     }
 
     const int min_tail_points = 10;
@@ -166,12 +166,13 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
 
         Trajectory trajectory = trajectoryHelper.buildTrajectory(
-                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d,
+                start_lane,
                 profile, target_lane, time_frame, is_changing_lane);
 
         printf("\t\tL:%d v:%2.2f", target_lane, t_target_speed);
 
-        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 8);
+        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 7);
 
         bool is_valid = true;
         if (is_feasible) {
@@ -238,12 +239,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                     // Stay in the current lane
                     if (!lane_change_lock) {
                         best_trajectory = trajectoryHelper.buildTrajectory(
-                                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane,
                                 profile, start_lane, time_frame, is_changing_lane);
                     }
                     else {
                         best_trajectory = trajectoryHelper.buildTrajectory(
-                                t_start_x, t_start_y, t_start_yaw, t_start_s, start_lane,
+                                t_start_x, t_start_y, t_start_yaw, t_start_s, t_start_d, start_lane,
                                 profile, fix_lane, time_frame, is_changing_lane);
                     }
                     cout << "" << " Braking!" << endl;
