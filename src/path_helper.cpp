@@ -19,19 +19,19 @@ void PathHelper::estimate_v_a(const vector<double> &previous_path_x, const vecto
     vector<double> poly_x;
     vector<double>  poly_y;
     int start_idx = previous_path_x.size() - min_tail_points;
-    for (int i = start_idx; i <  previous_path_x.size(); i++)
+    for (int i = 0; i <  min_tail_points; i++)
     {
-        poly_x.push_back(i-start_idx);
-        poly_y.push_back(
-                MapTransformer::distance(previous_path_x[start_idx], previous_path_y[start_idx], previous_path_x[i], previous_path_y[i]));
+        poly_x.push_back(i * 0.02);
+        poly_y.push_back(MapTransformer::distance(
+                previous_path_x[start_idx], previous_path_y[start_idx], previous_path_x[start_idx + i], previous_path_y[start_idx + i]));
     }
 
     // Approximate points with 2nd order polynomial
     vector<double> coefficients;
     MathHelper::polyfit(poly_x, poly_y, coefficients, 2);
 
-    double v0 = coefficients[1] / 0.02;
-    double a0 = coefficients[2] / (0.02 * 0.02) * 2;
+    double v0 = coefficients[1];
+    double a0 = coefficients[2] * 2;
 
     double t = 0.02 * (min_tail_points - 1);
 
