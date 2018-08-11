@@ -1,7 +1,3 @@
-//
-// Created by victor on 29.07.18.
-//
-
 #ifndef PATH_PLANNING_TRAJECTORY_H
 #define PATH_PLANNING_TRAJECTORY_H
 

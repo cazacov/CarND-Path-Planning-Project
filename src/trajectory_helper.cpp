@@ -1,7 +1,3 @@
-//
-// Created by victor on 29.07.18.
-//
-
 #include "trajectory_helper.h"
 #include "speed_helper.h"
 #include "maptransformer.h"
@@ -103,13 +99,6 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     result.start_lane = start_lane;
     result.target_lane = target_lane;
 
-    // check points
-    for (int i = 0; i < ptsx.size() - 1; i++) {
-        if (ptsx[i] >= ptsx[i+1])
-        {
-            cout << "OMG";
-        }
-    }
 
     result.spline.set_points(ptsx, ptsy);
 
@@ -142,8 +131,7 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         double deriv1 = trajectory.spline.deriv(1, x_point);
         double deriv2 = trajectory.spline.deriv(2, x_point);
 
-        double local_yaw = atan2(deriv1, 1);
-        dt = 0.02 * cos(local_yaw);
+        dt = 0.02 / sqrt(1 + deriv1*deriv1);
 
         // curvature
         double k = fabs(deriv2) / pow(1 + deriv1 * deriv1, 3.0/2.0 );
