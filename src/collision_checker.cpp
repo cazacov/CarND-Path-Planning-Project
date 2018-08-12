@@ -131,5 +131,17 @@ bool CollisionChecker::check_limits(Trajectory &trajectory, const double max_spe
 }
 
 double CollisionChecker::loop_distance(double s1, double s2) {
+
+    const double kLoopLength = 6946;
+
+    if (s1 > kLoopLength && s2 < 500)
+    {
+        s1 -= kLoopLength;
+    }
+    else if (s2 > kLoopLength && s1 < 500)
+    {
+        s2 -= kLoopLength;
+    }
+
     return s1 - s2;
 }
