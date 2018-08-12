@@ -166,7 +166,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         printf("\t\tL:%d v:%2.2f", target_lane, t_target_speed);
 
-        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 7.5);
+        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 8);
 
         bool is_valid = true;
         if (is_feasible) {

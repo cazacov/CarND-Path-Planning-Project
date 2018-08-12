@@ -2,14 +2,23 @@
 #include <math.h>
 using namespace std;
 
-void Trajectory::update_metrics(double time_step, double initial_v) {
+void Trajectory::update_metrics(double time_step, double initial_v, double start_x, double start_y) {
 
     // calculate tangential velocity
     v_tan.clear();
-    v_tan.push_back(initial_v);
-    for (int i = 0; i < path_x.size() - 1; i++) {
-        double dx = path_x[i + 1] - path_x[i];
-        double dy = path_y[i + 1] - path_y[i];
+    for (int i = 0; i < path_x.size(); i++) {
+        double dx;
+        double dy;
+        if (i > 0)
+        {
+            dx = path_x[i] - path_x[i-1];
+            dy = path_y[i] - path_y[i-1];
+        }
+        else {
+            dx = path_x[i] - start_x;
+            dy = path_y[i] - start_y;
+        }
+
         double v = sqrt(dx * dx + dy * dy) / time_step;
         v_tan.push_back(v);
     }
@@ -30,6 +39,25 @@ void Trajectory::update_metrics(double time_step, double initial_v) {
         double acc_norm = v_tan[i] * v_tan[i] * path_k[i];
         a_norm.push_back(acc_norm);
     }
+
+    // calculate curvature
+    vector<double> k1;
+    for (int i = 0; i < path_x.size()-2; i++) {
+        double dx1 = path_x[i+1] - path_x[i];
+        double dy1 = path_y[i+1] - path_y[i];
+        double dx2 = path_x[i+2] - path_x[i+1];
+        double dy2 = path_y[i+2] - path_y[i+1];
+
+        double mag_1 = sqrt(dx1*dx1+dy1*dy1);
+        double mag_2 = sqrt(dx2*dx2+dy2*dy2);
+        double mag_3 = sqrt((dx1+dx2)*(dx1+dx2)+(dy1+dy2)*(dy1+dy2));
+
+        double angle = acos((dx1*dx2+dy1*dy2)/mag_1/mag_2);
+        double kk = 2 * sin(angle) / mag_3;
+        k1.push_back(kk);
+    }
+
+
 
     // prepare sum vectors for sliding average calculation
     vector<double> a_tan_sum;
@@ -55,7 +83,7 @@ void Trajectory::update_metrics(double time_step, double initial_v) {
 
     int window_size = 10;   // 0.2 second
 
-    for (int i = 0; i < a_tan_sum.size() - window_size; i++) {
+    for (int i = 0; i < 15; i++) {
         double average_a_tan = (a_tan_sum[i + window_size] - a_tan_sum[i]) / window_size;
         double average_a_norm = (a_norm_sum[i + window_size] - a_norm_sum[i]) / window_size;
         double average_a_total = sqrt(average_a_norm * average_a_norm + average_a_tan * average_a_tan);

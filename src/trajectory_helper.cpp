@@ -75,15 +75,35 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     vector<double> next_wp2 = MapTransformer::getXY(start_s + s2, d3, map_waypoints_s, map_waypoints_x, map_waypoints_y);
     vector<double> next_wp3 = MapTransformer::getXY(start_s + s3, d4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
-    ptsx.push_back(next_wp0[0]);
-    ptsx.push_back(next_wp1[0]);
-    ptsx.push_back(next_wp2[0]);
-    ptsx.push_back(next_wp3[0]);
+    /*
+    if (start_speed > 10)
+    {
+        ptsx.clear();
+        ptsy.clear();
 
-    ptsy.push_back(next_wp0[1]);
-    ptsy.push_back(next_wp1[1]);
-    ptsy.push_back(next_wp2[1]);
-    ptsy.push_back(next_wp3[1]);
+        double phi = 0;
+        while(phi <= 71)
+        {
+            double p = MapTransformer::deg2rad(phi);
+            double x = 50*sin(p);
+            double y =  50 - 50*cos(p);
+            ptsx.push_back(start_x + x);
+            ptsy.push_back(start_y + y);
+            phi+=10;
+        }
+    }
+    else {
+*/
+        ptsx.push_back(next_wp0[0]);
+        ptsx.push_back(next_wp1[0]);
+        ptsx.push_back(next_wp2[0]);
+        ptsx.push_back(next_wp3[0]);
+
+        ptsy.push_back(next_wp0[1]);
+        ptsy.push_back(next_wp1[1]);
+        ptsy.push_back(next_wp2[1]);
+        ptsy.push_back(next_wp3[1]);
+//    }
 
     // Shift car reference to 0 degrees
     for (int i = 0; i < ptsx.size(); i++)
@@ -103,7 +123,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     result.spline.set_points(ptsx, ptsy);
 
     generatePath(start_x, start_y, start_yaw, profile, time, result);
-    result.update_metrics(0.02, start_speed);
+    result.update_metrics(0.02, start_speed, start_x, start_y);
     return result;
 }
 
