@@ -113,7 +113,6 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
     trajectory.path_x.clear();
     trajectory.path_y.clear();
     trajectory.path_v.clear();
-    trajectory.path_a.clear();
 
     double t = 0;
     double dt = 0.02;
@@ -145,7 +144,6 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_x.push_back(x_point);
         trajectory.path_y.push_back(y_point);
         trajectory.path_v.push_back(profile.get_v(t));
-        trajectory.path_a.push_back(profile.get_a(t));
         trajectory.path_k.push_back(k);
     }
 }

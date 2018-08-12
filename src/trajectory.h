@@ -2,6 +2,7 @@
 #define PATH_PLANNING_TRAJECTORY_H
 
 #include <vector>
+#include <string>
 
 #include "spline.h"
 
@@ -12,22 +13,22 @@ public:
     std::vector<double> path_x;
     std::vector<double> path_y;
     std::vector<double> path_v;
-    std::vector<double> path_a;
     std::vector<double> v_tan;
     std::vector<double> path_k; // spline curvature
 
     int start_lane;
     int target_lane;
 
+    // feasibility check output
     double collision_my_s;
     double collision_my_d;
     double collision_other_s;
     double collision_other_d;
     double collision_time;
-    int collision_other_id;
-    double collision_min_d;
-    double collision_min_s;
+    int collision_other_car_id;
+    std::string limit_message;
 
+    // Logging
     std::vector<std::vector<double>> cars_sd;
     std::vector<std::vector<double>> my_sd;
 

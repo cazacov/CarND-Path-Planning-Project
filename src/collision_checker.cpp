@@ -10,9 +10,8 @@
 using namespace std;
 
 bool CollisionChecker::check_collision(const vector<vector<double>> &sensor_fusion, double t_start_yaw,
-                                       int current_lane,
                                        Trajectory &trajectory, double start_time) {
-    bool result = true;
+    bool collision_detected = false;
 
     trajectory.my_sd.clear();
     trajectory.cars_sd.clear();
@@ -56,34 +55,29 @@ bool CollisionChecker::check_collision(const vector<vector<double>> &sensor_fusi
             // round car's d coordinate
             car_d = MapTransformer::lane2d(car_lane);
 
-            // TODO: check end of highway loop
             if (loop_distance(my_s, car_s0) > 10 && car_lane == trajectory.start_lane)
             {
                 // Ignore cars behind me. They should keep safe distance.
                 continue;
             }
 
-
             double car_yaw = atan2(car_vy, car_vx);
             vector<double> car_xy = MapTransformer::getXY(car_s, car_d, map_waypoints_s, map_waypoints_x,
                                                           map_waypoints_y);
 
+            bool is_changing_lane = trajectory.start_lane != trajectory.target_lane;
 
-
-            bool trajectory_changes_lane = trajectory.start_lane != trajectory.target_lane;
-
-            // TODO: check end of highway loop
             double min_s_distance = trajectory.path_v[i] * 1.5;   // At least 1.5 second distance to next car
             double min_back_s = 0;   // Ignore cars behind us
             double min_d_distance = 2.0;
 
-            if (trajectory_changes_lane)
+            if (is_changing_lane)
             {
                 min_d_distance = 2.6;   // more defensive collision check
 
                 if (car_lane == trajectory.start_lane)
                 {
-                    min_s_distance = trajectory.path_v[i] * 1; // We can shortly pass near another car in my lane when changing to another lane
+                    min_s_distance = trajectory.path_v[i] * 1; // I can pass closer to another car in my lane when changing to another lane
                 }
                 else {
                     min_s_distance = trajectory.path_v[i] * 2; // add penalty for changing lane
@@ -98,33 +92,37 @@ bool CollisionChecker::check_collision(const vector<vector<double>> &sensor_fusi
                     trajectory.collision_my_d = my_d;
                     trajectory.collision_other_s = car_s;
                     trajectory.collision_other_d = car_d;
-                    trajectory.collision_other_id = car_id;
+                    trajectory.collision_other_car_id = car_id;
                     trajectory.collision_time = time;
-                    trajectory.collision_min_d = min_d_distance;
-                    trajectory.collision_min_s = min_s_distance;
-                    result = false;
+                    collision_detected = true;
                     break;
                 }
             }
         }
-        if (!result)
+        if (collision_detected) // Collision detected, no need to check other points
         {
             break;
         }
         trajectory.cars_sd.push_back(carsd);
     }
-    return result;
+    return collision_detected;
 }
 
 bool CollisionChecker::check_limits(Trajectory &trajectory, const double max_speed, const double max_acceleration) {
+
+
+    char buf[100];
+
     if (trajectory.max_speed > max_speed )
     {
-        cout << "\tExceeds speed limit " << std::setw(2) << trajectory.max_speed;
+        sprintf(buf, "Exceeds speed limit, v=%2.2f",  trajectory.max_speed);
+        trajectory.limit_message = buf;
         return false;
     }
     if (trajectory.max_total_acceleration > max_acceleration)
     {
-        cout << "\tExceeds acceleration limit " << std::setw(3) << trajectory.max_total_acceleration;
+        sprintf(buf, "Exceeds acceleration limit, a=%2.2f",  trajectory.max_total_acceleration);
+        trajectory.limit_message = buf;
         return false;
     }
     return true;
