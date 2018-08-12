@@ -10,6 +10,7 @@
 #include "speed_helper.h"
 #include "path_helper.h"
 #include "trajectory_helper.h"
+#include "collision_checker.h"
 #include "log_helper.h"
 
 PathPlanner::PathPlanner(const std::vector<double> &_map_waypoints_x,
@@ -139,6 +140,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     TrajectoryHelper trajectoryHelper(map_waypoints_x, map_waypoints_y, map_waypoints_s, map_waypoints_dx,
                                       map_waypoints_dy);
 
+    CollisionChecker collisionChecker(map_waypoints_x, map_waypoints_y, map_waypoints_s, map_waypoints_dx,
+                                      map_waypoints_dy);
+
     Trajectory best_trajectory;
 
     printf("%3d %d %3s %4.2f %2.2f %2.2f", iteration, start_lane, buf, t_start_s, t_start_speed, t_start_d);
@@ -166,11 +170,11 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
         printf("\t\tL:%d v:%2.2f", target_lane, t_target_speed);
 
-        bool is_feasible = trajectoryHelper.check_limits(trajectory, kMaxSpeed, 8);
+        bool is_feasible = collisionChecker.check_limits(trajectory, kMaxSpeed, 8);
 
         bool is_valid = true;
         if (is_feasible) {
-            is_valid = trajectoryHelper.check_collision(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
+            is_valid = collisionChecker.check_collision(sensor_fusion, t_start_yaw, start_lane, trajectory, start_time);
         }
 
 /*

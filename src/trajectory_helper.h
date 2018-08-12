@@ -28,16 +28,11 @@ public:
 
     }
 
-public:
     Trajectory buildTrajectory(double start_x, double start_y, double start_yaw, double start_s, double start_d, int start_lane, double start_speed,
                                AccelerationProfile& profile, int target_lane, double time, bool is_changing_lane);
 
     void generatePath(double start_x, double start_y, double start_yaw, AccelerationProfile &profile, double time, Trajectory& trajectory);
 
-    bool check_collision(const std::vector<std::vector<double>> &sensor_fusion, double t_start_yaw, int current_lane,
-                         Trajectory &trajectory, double start_time);
-
-    bool check_limits(Trajectory &trajectory, const double max_speed, const double max_acceleration);
 };
 
 

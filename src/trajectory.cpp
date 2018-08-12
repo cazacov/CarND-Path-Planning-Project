@@ -40,7 +40,7 @@ void Trajectory::update_metrics(double time_step, double initial_v, double start
         a_norm.push_back(acc_norm);
     }
 
-    // calculate curvature
+    // Alternative way to calculate curvature comparing vector rotation
     vector<double> k1;
     for (int i = 0; i < path_x.size()-2; i++) {
         double dx1 = path_x[i+1] - path_x[i];
@@ -56,7 +56,6 @@ void Trajectory::update_metrics(double time_step, double initial_v, double start
         double kk = 2 * sin(angle) / mag_3;
         k1.push_back(kk);
     }
-
 
 
     // prepare sum vectors for sliding average calculation
@@ -83,7 +82,8 @@ void Trajectory::update_metrics(double time_step, double initial_v, double start
 
     int window_size = 10;   // 0.2 second
 
-    for (int i = 0; i < 15; i++) {
+    // Check first 20 points only
+    for (int i = 0; i < 20; i++) {
         double average_a_tan = (a_tan_sum[i + window_size] - a_tan_sum[i]) / window_size;
         double average_a_norm = (a_norm_sum[i + window_size] - a_norm_sum[i]) / window_size;
         double average_a_total = sqrt(average_a_norm * average_a_norm + average_a_tan * average_a_tan);
