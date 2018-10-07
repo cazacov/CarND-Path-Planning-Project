@@ -34,6 +34,19 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
     - Checks for collisions
     - Checks for speed and acceleration limits
     - Makes adjustment to highway map looped after 6945.554 meters
+* src/spline.cpp; src/math_helper.h - Third party libraries for spline and polynomial interpolation
+
+## Bird's eye view of the algorithm
+
+1. Get data from the simulator.
+2. Looking at previous way points estimate the velocity and position at the last point. These values are then used as initial data for further path planning.  
+3. Calculate acceleration profile from initial speed to the target speed.
+4. Prepare ordered list of target lane candidates. Staying in the current lane has higher priority (comfort for passengers) than lane changing.
+5. For every target lane candidate generate a smooth trajectory continuing the previous path.
+6. Validate trajectories checking for collisions and speed/acceleration limits.
+7. If there is a valid trajectory, then we are done! Generate path points and pass them to the simulator.
+8. If none of trajectory candidates is valid, reduce target speed a little and go to step 3.         
+
 
 ## Basic Build Instructions
 

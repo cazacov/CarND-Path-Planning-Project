@@ -26,6 +26,7 @@
 
 class MathHelper {
 public:
+    // Returns polynomial regression of the given order
     static void polyfit(const std::vector<double> &xv, const std::vector<double> &yv, std::vector<double> &coeff, int order) {
         Eigen::MatrixXd A(xv.size(), order + 1);
         Eigen::VectorXd yv_mapped = Eigen::VectorXd::Map(&yv.front(), yv.size());
