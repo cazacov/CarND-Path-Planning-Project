@@ -4,9 +4,9 @@
 
 class AccelerationProfile {
 public:
-    double v;
-    double a;
-    double j;
+    double v;   // velocity
+    double a;   // acceleration
+    double j;   // jerk
 
     double get_s(double time);
     double get_v(double time);

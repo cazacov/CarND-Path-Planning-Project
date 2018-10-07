@@ -12,6 +12,27 @@ Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoi
 
 The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
 
+## Code structure
+* src/main.cpp - Program entry point
+    - instantiates other classes of the program
+    - gets data from simulator and forwards it to PathPlanner
+    - gets the calculated path from the PathPlanner and returns it back to simulator
+* src/pathplanner.cpp - This is the most interesting part of the program that makes decisions and chooses the best trajectory. Uses several helper classes.
+* src/maptransformer.cpp - Helper class for:
+    - Coordinate transformations XY <-> Frenet
+    - Converting the d coordinate to lane number and back
+    - Waypoint helper functions.   
+* src/speed_helper.cpp - Helper class to calculate acceleration profiles
+    - Finds best acceleration profile given initial and target speed and considering maximum allowed acceleration and jerk
+    - Estimates last speed, acceleration, x, y and yaw given the previous trajectory points.    
+* src/trajectory_helper.cpp - Helper class to calculate possible movement trajectories
+    - Finds trajectory given acceleration profile and initial and target lanes
+    - Convert trajectory to way points
+* src/collision_helper.cpp - Helper class to check if given trajectory is valid
+    - Checks for collisions
+    - Checks for speed and acceleration limits
+    - Makes adjustment to highway map looped after 6945.554 meters
+
 ## Basic Build Instructions
 
 1. Clone this repo.
