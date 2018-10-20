@@ -90,9 +90,9 @@ The car is able to drive at least two laps (10 miles) without incident without e
 
 ## Possible Improvements
 
-Currently the trajectory planner considers only staying in the current lane or changing one lane to the left or right. It does not evaluate trajectories that change lanes 1->3 or 3->1. For example in the following situation it's "blocked" and defensively decides to reduce speed, instead of trying to go in the most left lane:
+Currently the trajectory planner considers only staying in the current lane or changing one lane to the left or right. It does not evaluate trajectories that change lanes 1->3 or 3->1. For example in the following situation it's "blocked" and defensively decides to reduce speed, instead of trying to go in the leftmost lane:
 
-nning-Project/blob/master/_img/blocked.jpg?raw=true)
+![Blocked in the rightmost lane](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/blocked.jpg?raw=true)
     
 
 ## Basic Build Instructions
