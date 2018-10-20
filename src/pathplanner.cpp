@@ -232,10 +232,15 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
                 lane_change_lock = 100;    // Fix that decision for next 100 iterations
                 cout << " Changing to lane " << target_lane;
 
+
+/*
+                // DEBUGGING!!! Writes logs to file system
+
                 LogHelper::change_lane(car_s, car_d, car_x, car_y,
                                        t_start_s, t_start_d, t_start_x, t_start_y,
                                        t_start_speed, t_start_acceleration, t_start_yaw,
                                        sensor_fusion, best_trajectory, start_lane, target_lane);
+*/
 
 
             }

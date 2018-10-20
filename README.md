@@ -72,7 +72,7 @@ That problem arises only because the algorithm is intentionally working with ver
    
 After several tries to solve the problem in a "right" way I decided to ignore the initial acceleration and generate profile only based on the desired velocity delta and planning horizon time. Theoretically that could lead to unnecessary jerk, but the simulator calls my code again and again many times per second with slightly different initial conditions and that makes the resulting trajectory smooth. In this case the fast call cycles of the simulator bring an advantage     
 
-## Trajectoy planner ##
+## Trajectory planner ##
 
 To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. The path always starts from the current car position and yaw and then goes through 4 key points on time scale from 0 to 1, where 1 corresponds to the whole planning horizon. The position of these key points is chosen depending on the situation:
 
@@ -80,11 +80,20 @@ To generate smooth trajectories I am using spline interpolation. Advantage of th
 
 You can find that code in TrajectoryHelper::buildTrajectory function.  
 
-Every candidate trajectory is checked for hitting speed and acceleration limits. Calculating velocity and tangential acceleration is easy. To get the normal acceleration I need to estimate the path's curvature. Fortunately the TK-Spline library I am suing returns not only the value, but also first and second derivatives of the generated function. Curvature is then calculated with usual analysis formula:
+Every candidate trajectory is checked for hitting speed and acceleration limits. Calculating velocity and tangential acceleration is easy. To get the normal acceleration I need to estimate the path's curvature. Fortunately the [TK-Spline library](https://kluge.in-chemnitz.de/opensource/spline/) returns not only the value, but also first and second derivatives of the generated function. Curvature is then calculated with usual analysis formula:
 
 ![Curvature](https://wikimedia.org/api/rest_v1/media/math/render/svg/c92d581fd7b8a66308bde64d64dcd8d71cc66ce0)   
 
+## Results ##
 
+The car is able to drive at least two laps (10 miles) without incident without exceeding speed, acceleration and jerk limits. The mean speed is about 45 MPH, it took almost exactly 8 minutes to drive 6 miles. Most of the time car drives at speed 48 MPH but sometimes decelerates to avoid collision.
+
+## Possible Improvements
+
+Currently the trajectory planner considers only staying in the current lane or changing one lane to the left or right. It does not evaluate trajectories that change lanes 1->3 or 3->1. For example in the following situation it's "blocked" and defensively decides to reduce speed, instead of trying to go in the most left lane:
+
+nning-Project/blob/master/_img/blocked.jpg?raw=true)
+    
 
 ## Basic Build Instructions
 
