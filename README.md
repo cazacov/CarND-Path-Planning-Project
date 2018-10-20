@@ -74,12 +74,15 @@ After several tries to solve the problem in a "right" way I decided to ignore th
 
 ## Trajectoy planner ##
 
-To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. The path always starts from the current car position and yaw and then goes through 4 key points on time scale from 0 to 1, where 1 corresponds to the whole planning horizon. The position of that key points is chosen depending on the situation:
+To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. The path always starts from the current car position and yaw and then goes through 4 key points on time scale from 0 to 1, where 1 corresponds to the whole planning horizon. The position of these key points is chosen depending on the situation:
 
 ![Acceleration profile](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/splines.png?raw=true)
+
 You can find that code in TrajectoryHelper::buildTrajectory function.  
 
-Every candidate trajectory is checked for hitting speed and acceleration limits. Calculating velocity and tangential acceleration is easy. To get the normal acceleration I need to estimate the path's curvature.  
+Every candidate trajectory is checked for hitting speed and acceleration limits. Calculating velocity and tangential acceleration is easy. To get the normal acceleration I need to estimate the path's curvature. Fortunately the TK-Spline library I am suing returns not only the value, but also first and second derivatives of the generated function. Curvature is then calculated with usual analysis formula:
+
+![Curvature](https://wikimedia.org/api/rest_v1/media/math/render/svg/c92d581fd7b8a66308bde64d64dcd8d71cc66ce0)   
 
 
 
