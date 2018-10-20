@@ -36,7 +36,7 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
     - Makes adjustment to highway map looped after 6945.554 meters
 * src/spline.cpp; src/math_helper.h - Third party libraries for spline and polynomial interpolation
 
-## Bird's eye view of the algorithm
+## Bird's eye view of the path planning algorithm
 
 1. Get data from the simulator.
 2. Looking at previous way points estimate the velocity and position at the last point. These values are then used as initial data for further path planning.  
@@ -45,7 +45,22 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
 5. For every target lane candidate generate a smooth trajectory continuing the previous path.
 6. Validate trajectories checking for collisions and speed/acceleration limits.
 7. If there is a valid trajectory, then we are done! Generate path points and pass them to the simulator.
-8. If none of trajectory candidates is valid, reduce target speed a little and go to step 3.         
+8. If none of trajectory candidates is valid, reduce target speed a little and go to step 3.
+9. If no valid trajectory can be found and target speed in step 8 is decreased below the limit (10 m/s), then keep the current lane. That can happen if another car violates the traffic rules and changes the lane just before our car. In that situation keeping same lane and constant low speed is considered better than chaotic reaction of algorithm put in "impossible" initial conditions.    
+
+## Planning horizon
+
+The algorithm always plans for 3 seconds into the future trying to find the best trajectory that smoothly continues the previous one. To make reaction faster it preserves only first 12 points of the old trajectory and starts generating new waypoints from position 13. 12 points are enough for smooth transition from the old into new trajectory.
+
+### Acceleration profile
+
+Let's say we want to accelerate from the speed v0 to v1 in t seconds and want acceleration be 0 at the end of that time (car reaches constant speed). Given initial acceleration and maximal allowed acceleration and jerk, the graph of acceleration as a function of time should look like the following:
+
+![Acceleration profile](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/acceleration-profile.png?raw=true)
+   
+
+
+
 
 
 ## Basic Build Instructions

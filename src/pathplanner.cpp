@@ -46,7 +46,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
 
 
 
-    // Starting point of new trajectory
+    // Starting point of a new trajectory
     double t_start_x = car_x;
     double t_start_y = car_y;
     double t_start_yaw = car_yaw;
@@ -55,8 +55,9 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
     double t_start_s = car_s;
     double t_start_d = car_d;
 
-    // Re-use only first points of the previous path
-    if (previous_path_x.size() > kReuseNPoints) {
+    // Re-use only first kReuseNPoints points of the previous path
+    if (previous_path_x.size() > kReuseNPoints)
+    {
         previous_path_x.resize(kReuseNPoints);
         previous_path_y.resize(kReuseNPoints);
     }
@@ -197,12 +198,12 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
             if (lane_index < possible_lanes.size() - 1) {
                 lane_index++; // try next lane
             } else {
-                // All possible lanes tested. Reduce speed and try again
+                // All possible lanes tested and no feasible found. Reduce the speed and try again
                 lane_index = 0;
                 t_target_speed -= 0.447;    // Try to drive 1 MPH slower
 
                 if (t_target_speed < kMinSpeed) {
-                    cout << "" << " Emergency braking!" << endl;
+                    cout << "" << " Emergency situation!" << endl;
 
                     if (is_changing_lane) {
                         // Continue lane change
@@ -247,7 +248,7 @@ PathPlanner::planPath(double car_x, double car_y, double car_s, double car_d, do
         }
     }
 
-    // Copy trajectory's points to output vecors
+    // Copy trajectory's points to output vectors
 
     for (int i = 0; i < best_trajectory.path_x.size(); i++) {
         next_x_vals.push_back(best_trajectory.path_x[i]);
