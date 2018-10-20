@@ -15,7 +15,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (d244b95, 2018-08-02)"
-   sodipodi:docname="acceleration-profile.svg">
+   sodipodi:docname="acceleration-profile.svg"
+   inkscape:export-filename="/home/victor/Udacity/CarND3/CarND-Path-Planning-Project/_img/acceleration-profile.png"
+   inkscape:export-xdpi="119.94957"
+   inkscape:export-ydpi="119.94957">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -58,7 +61,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:#00ff00;stroke:#00ff00;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;opacity:0.452"
+       style="fill:#00ff00;stroke:#00ff00;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;opacity:0.35"
        d="M 63.499999,95.916667 75.406249,78.71875 h 33.602081 l 21.96042,33.07292 -18.52083,29.10416 H 93.927082 Z"
        id="path4716"
        inkscape:connector-curvature="0" />

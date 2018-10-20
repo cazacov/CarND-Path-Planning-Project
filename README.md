@@ -54,12 +54,32 @@ The algorithm always plans for 3 seconds into the future trying to find the best
 
 ### Acceleration profile
 
-Let's say we want to accelerate from the speed v0 to v1 in t seconds and want acceleration be 0 at the end of that time (car reaches constant speed). Given initial acceleration and maximal allowed acceleration and jerk, the graph of acceleration as a function of time should look like the following:
+Let's say we want to accelerate from the velocity __v0__ to __v1__ in __t__ seconds and want acceleration be 0 at the end of that time (car reaches constant speed). Given initial acceleration __a0__ and maximal allowed acceleration and jerk, the graph of acceleration as a function of time should look like the following:
 
 ![Acceleration profile](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/acceleration-profile.png?raw=true)
+
+The graph starts with acceleration = a0 at time = 0 and ends with a = 0 at time = t. The yellow area between the graph and time axis is equal to the total velocity change __dv = v1 - v0__. To be comfortable the acceleration graph should also be inside the box limited by max allowed acceleration and have slope less than the maximal allowed jerk (green area).
+
+Given initial values it's possible to calculate some smooth acceleration profile, for example using JMT technique.
+
+### Unfortunately that did not work ###
+
+To get stable acceleration profile it's critical to have good estimation of the initial acceleration __a0__. To get it I approximate the waypoints with 2-nd degree polynomial and get the second member. (I also tried approximating with 3 degree polynomial and considering jerk, but results are the same)
+
+Let's say real initial acceleration is 1 m/s2, but our estimation based on waypoint analysis returned 1.05. Looking on the total graph where 3 seconds planning horizon generate 150 time ticks you will not notice the difference. The problem is that the graph smoothly continues the previous path and first points will have a close to 1.05. Because the planning algorithm is working pretty fast, the simulator will only use 2-3 waypoints and then call my code again asking for the next path. That means __all__ waypoints really used by the simulator are generated based on the wrong acceleration and the car  will accelerate a bit. In the next iteration the process repeats. Having no chance to drive the whole provided path and only considering couple of first points that smoothly continue the wrong estimation the algorithm will accelerate the car indefinitely.
+
+That problem arises only because the algorithm is intentionally working with very limited set of input data and has to reverse engineer the acceleration form the waypoints. Real cars have precise IMU sensors that measure acceleration directly and do not accumulate mathematical errors. I am using such sensors in my Arduino projects - they are cheap, precise and reliable.   
    
+After several tries to solve the problem in a "right" way I decided to ignore the initial acceleration and generate profile only based on the desired velocity delta and planning horizon time. Theoretically that could lead to unnecessary jerk, but the simulator calls my code again and again many times per second with slightly different initial conditions and that makes the resulting trajectory smooth. In this case the fast call cycles of the simulator bring an advantage     
 
+## Trajectoy planner ##
 
+To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. The path always starts from the current car position and yaw and then goes through 4 key points on time scale from 0 to 1, where 1 corresponds to the whole planning horizon. The position of that key points is chosen depending on the situation:
+
+![Acceleration profile](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/splines.png?raw=true)
+You can find that code in TrajectoryHelper::buildTrajectory function.  
+
+Every candidate trajectory is checked for hitting speed and acceleration limits. Calculating velocity and tangential acceleration is easy. To get the normal acceleration I need to estimate the path's curvature.  
 
 
 

@@ -47,7 +47,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
             t4 = 1;
         }
         else {
-            // prefer more smooth trajectory
+            // finish lane changing maneuver. Prefer more smooth trajectory
             t1 = 0.3;
             d1 = d1 * 0.8 + start_d * 0.2;
             t2 = 0.5;
@@ -57,7 +57,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
         }
     }
     else {
-        // prefer more smooth trajectory
+        // changing the lane. Prefer more smooth trajectory
         t1 = 0.7;
         t2 = 0.8;
         t3 = 0.9;
