@@ -1,7 +1,3 @@
-//
-// Created by victor on 08.08.18.
-//
-
 #ifndef PATH_PLANNING_LOGGER_H
 #define PATH_PLANNING_LOGGER_H
 

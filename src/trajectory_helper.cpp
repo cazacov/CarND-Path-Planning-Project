@@ -107,7 +107,10 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     // Call spline interpolation library
     result.spline.set_points(ptsx, ptsy);
 
+    // Generate waypoints
     generatePath(start_x, start_y, start_yaw, profile, time, result);
+
+    // Calculate maximum speed and acceleration
     result.update_metrics(0.02, start_speed, start_x, start_y);
     return result;
 }
@@ -132,6 +135,7 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         double x_ref = x_point;
         double y_ref = y_point;
 
+        // transform back to world coordinate system
         x_point = x_ref * cos(start_yaw) - y_ref*sin(start_yaw);
         y_point = x_ref * sin(start_yaw) + y_ref*cos(start_yaw);
 
@@ -143,7 +147,7 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_v.push_back(profile.get_v(t));
 
 
-        // curvature
+        // Calculate curvature
 
         double deriv1 = trajectory.spline.deriv(1, x_point);
         double deriv2 = trajectory.spline.deriv(2, x_point);

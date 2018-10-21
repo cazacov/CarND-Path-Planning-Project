@@ -74,7 +74,7 @@ After several tries to solve the problem in a "right" way I decided to ignore th
 
 ## Trajectory planner ##
 
-To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. Because the TK-Spline library requires point coordinates to not have loops along the x (time) axis, the coordinate system is first rotated at __-yaw__ angle. That makes car pointing exactly in x direction (TrajectoryHelper::buildTrajectory). After generating spline and waypoints their coordinates are rotated again at same angle in opposite direction to get back into the world coordinate system.
+To generate smooth trajectories I am using spline interpolation. Advantage of that technique is that the resulting path is guaranteed to pass through the key points. Because the TK-Spline library requires point coordinates to not have loops along the x (time) axis, the coordinate system is first rotated at __-yaw__ angle. That makes car pointing exactly in x direction (TrajectoryHelper::buildTrajectory). After generating spline and waypoints their coordinates are rotated again at same angle in the opposite direction to get back into the world coordinate system (TrajectoryHelper::generatePath).
 
 ![Coordinate system](https://github.com/cazacov/CarND-Path-Planning-Project/blob/master/_img/coordinates.png?raw=true)    
 

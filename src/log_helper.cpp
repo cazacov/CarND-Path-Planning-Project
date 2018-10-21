@@ -1,7 +1,3 @@
-//
-// Created by victor on 08.08.18.
-//
-
 #include "log_helper.h"
 #include <chrono>
 #include <stdio.h>
