@@ -2,6 +2,10 @@
 #include <math.h>
 using namespace std;
 
+
+/*
+ * Calculate max acceleration
+ */
 void Trajectory::update_metrics(double time_step, double initial_v, double start_x, double start_y) {
 
     // calculate tangential velocity
@@ -38,23 +42,6 @@ void Trajectory::update_metrics(double time_step, double initial_v, double start
     for (int i = 0; i < v_tan.size(); i++) {
         double acc_norm = v_tan[i] * v_tan[i] * path_k[i];
         a_norm.push_back(acc_norm);
-    }
-
-    // Alternative way to calculate curvature comparing vector rotation
-    vector<double> k1;
-    for (int i = 0; i < path_x.size()-2; i++) {
-        double dx1 = path_x[i+1] - path_x[i];
-        double dy1 = path_y[i+1] - path_y[i];
-        double dx2 = path_x[i+2] - path_x[i+1];
-        double dy2 = path_y[i+2] - path_y[i+1];
-
-        double mag_1 = sqrt(dx1*dx1+dy1*dy1);
-        double mag_2 = sqrt(dx2*dx2+dy2*dy2);
-        double mag_3 = sqrt((dx1+dx2)*(dx1+dx2)+(dy1+dy2)*(dy1+dy2));
-
-        double angle = acos((dx1*dx2+dy1*dy2)/mag_1/mag_2);
-        double kk = 2 * sin(angle) / mag_3;
-        k1.push_back(kk);
     }
 
 

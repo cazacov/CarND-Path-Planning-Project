@@ -15,7 +15,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     vector<double> ptsx;
     vector<double> ptsy;
 
-    // add two start points to define start and initial start_yaw of the trajectory
+    // add two start points to define start position and initial start_yaw of the trajectory
 
     double prev_x = start_x - cos(start_yaw);
     double prev_y = start_y - sin(start_yaw);
@@ -26,11 +26,15 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     ptsy.push_back(prev_y);
     ptsy.push_back(start_y);
 
+    // Key points for spline generation
+
+    // times
     double t1;
     double t2;
     double t3;
     double t4;
 
+    // d-coordinates
     double d1 = MapTransformer::lane2d(target_lane);
     double d2 = MapTransformer::lane2d(target_lane);
     double d3 = MapTransformer::lane2d(target_lane);
@@ -40,7 +44,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     {
 
         if (!is_changing_lane) {
-            // prefer more precise trajectory
+            // Keep current lane. Prefer more precise trajectory
             t1 = 0.3;
             t2 = 0.6;
             t3 = 0.8;
@@ -64,12 +68,13 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
         t4 = 1;
     }
 
+
     double s0 = profile.get_s(time*t1);
     double s1 = profile.get_s(time*t2);
     double s2 = profile.get_s(time*t3);
     double s3 = profile.get_s(time*t4);
 
-    // add another points
+    // add key points
     vector<double> next_wp0 = MapTransformer::getXY(start_s + s0, d1, map_waypoints_s, map_waypoints_x, map_waypoints_y);
     vector<double> next_wp1 = MapTransformer::getXY(start_s + s1, d2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
     vector<double> next_wp2 = MapTransformer::getXY(start_s + s2, d3, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -99,7 +104,7 @@ Trajectory TrajectoryHelper::buildTrajectory(double start_x, double start_y, dou
     result.start_lane = start_lane;
     result.target_lane = target_lane;
 
-
+    // Call spline interpolation library
     result.spline.set_points(ptsx, ptsy);
 
     generatePath(start_x, start_y, start_yaw, profile, time, result);
@@ -127,14 +132,6 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         double x_ref = x_point;
         double y_ref = y_point;
 
-        double deriv1 = trajectory.spline.deriv(1, x_point);
-        double deriv2 = trajectory.spline.deriv(2, x_point);
-
-        dt = 0.02 / sqrt(1 + deriv1*deriv1);
-
-        // curvature
-        double k = fabs(deriv2) / pow(1 + deriv1 * deriv1, 3.0/2.0 );
-
         x_point = x_ref * cos(start_yaw) - y_ref*sin(start_yaw);
         y_point = x_ref * sin(start_yaw) + y_ref*cos(start_yaw);
 
@@ -144,6 +141,15 @@ void TrajectoryHelper::generatePath(double start_x, double start_y, double start
         trajectory.path_x.push_back(x_point);
         trajectory.path_y.push_back(y_point);
         trajectory.path_v.push_back(profile.get_v(t));
+
+
+        // curvature
+
+        double deriv1 = trajectory.spline.deriv(1, x_point);
+        double deriv2 = trajectory.spline.deriv(2, x_point);
+        dt = 0.02 / sqrt(1 + deriv1*deriv1);
+        double k = fabs(deriv2) / pow(1 + deriv1 * deriv1, 3.0/2.0 );
+
         trajectory.path_k.push_back(k);
     }
 }
